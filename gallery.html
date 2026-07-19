@@ -126,8 +126,8 @@ const COOL = { lav:'#B5A8FF', ink:'#181626', dir:'#34324A', dirfg:'#E8E6F5',
 const mcW = p => p==null?WARM.muted : p>=80?WARM.danger : p>=50?WARM.amber : WARM.sage;
 const mcC = p => p==null?COOL.muted : p>=80?COOL.rose   : p>=50?COOL.amber : COOL.green;
 
-const CALM = { model:'O4.8', dir:'greenloom', branch:'dev', ctx:4,  h5:1,  d7:0,  cost:'0.23', dur:'00:02', add:0,   del:0 };
-const HOT  = { model:'O4.8', dir:'greenloom', branch:'release/1.2', ctx:88, h5:71, d7:92, cost:'3.10', dur:'00:47',  add:612, del:208 };
+const CALM = { model:'O4.8', dir:'directory', branch:'main', ctx:4,  h5:1,  d7:0,  cost:'0.23', dur:'00:02', add:0,   del:0 };
+const HOT  = { model:'O4.8', dir:'directory', branch:'release/1.2', ctx:88, h5:71, d7:92, cost:'3.10', dur:'00:47',  add:612, del:208 };
 
 const sp = n => ' '.repeat(n);
 const c  = (col,txt) => `<span style="color:${col}">${txt}</span>`;
