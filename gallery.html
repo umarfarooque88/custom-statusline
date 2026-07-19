@@ -1,163 +1,223 @@
-<title>Status Line Gallery — Pick One</title>
+<title>custom-statusline — pick a status line</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root{
-    --bg:#efece6; --fg:#241f1b; --sub:#6d645b; --card:#fbf9f5; --line:#e3ddd2;
-    --accent:#c15f3c; --shadow:0 10px 30px rgba(40,30,20,.10);
-    --panel:#14110f;
+    --void:#0e0f12; --panel:#16181d; --panel2:#1b1e24; --rule:#24272e;
+    --ink:#e6e8ec; --dim:#9aa1ab; --mut:#6b727c; --faint:#3a3f47;
+    --accent:#e2896a;                 /* replaced live by the focused design's hue */
+    --mono:ui-monospace,"Cascadia Code","SF Mono",Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --bar-h:46px;
   }
-  @media (prefers-color-scheme:dark){
-    :root{ --bg:#15130f; --fg:#ece5da; --sub:#a99f92; --card:#1e1a16; --line:#312b24; --accent:#e2896a; --shadow:0 12px 34px rgba(0,0,0,.45); }
-  }
-  :root[data-theme="light"]{ --bg:#efece6; --fg:#241f1b; --sub:#6d645b; --card:#fbf9f5; --line:#e3ddd2; --accent:#c15f3c; --shadow:0 10px 30px rgba(40,30,20,.10); }
-  :root[data-theme="dark"]{ --bg:#15130f; --fg:#ece5da; --sub:#a99f92; --card:#1e1a16; --line:#312b24; --accent:#e2896a; --shadow:0 12px 34px rgba(0,0,0,.45); }
-
   *{ box-sizing:border-box; }
-  body{ margin:0; background:var(--bg); color:var(--fg);
-    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif; line-height:1.5;
-    padding:clamp(20px,5vw,60px) clamp(16px,5vw,60px) 80px; }
-  .wrap{ max-width:900px; margin:0 auto; }
+  html,body{ margin:0; }
+  body{ background:var(--void); color:var(--ink); font-family:var(--sans);
+    line-height:1.5; padding-bottom:var(--bar-h);
+    background-image:radial-gradient(1200px 600px at 85% -10%, rgba(226,137,106,.05), transparent 60%);
+  }
 
-  header{ margin-bottom:36px; }
-  .kick{ font:600 12px/1 ui-monospace,"Cascadia Code",Consolas,monospace; letter-spacing:.18em;
-    text-transform:uppercase; color:var(--accent); margin:0 0 12px; }
-  h1{ font-size:clamp(26px,4.4vw,40px); font-weight:660; letter-spacing:-.025em; margin:0 0 10px; text-wrap:balance; }
-  .intro{ color:var(--sub); max-width:64ch; margin:0; font-size:15px; }
-  .intro code{ font-family:ui-monospace,Consolas,monospace; font-size:13px; color:var(--fg);
-    background:color-mix(in srgb,var(--accent) 12%,transparent); padding:1px 6px; border-radius:5px; }
+  /* ---- masthead --------------------------------------------------------- */
+  header{ border-bottom:1px solid var(--rule); padding:16px clamp(16px,4vw,40px) 15px; }
+  .eyebrow{ font-family:var(--mono); font-size:10.5px; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--mut); margin:0 0 6px; }
+  h1{ font-family:var(--mono); font-size:clamp(17px,1.8vw,21px); font-weight:600; letter-spacing:-.01em; margin:0 0 7px; }
+  h1 b{ color:var(--accent); font-weight:600; transition:color .35s ease; }
+  .lede{ color:var(--dim); font-size:12.5px; max-width:84ch; margin:0; }
+  .lede code{ font-family:var(--mono); font-size:11.5px; color:var(--ink);
+    background:var(--panel2); border:1px solid var(--rule); padding:1px 6px; border-radius:6px; }
 
-  .card{ background:var(--card); border:1px solid var(--line); border-radius:16px;
-    padding:22px 22px 24px; margin-top:20px; box-shadow:var(--shadow); }
-  .head{ display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:4px; }
-  .num{ font:700 13px/1 ui-monospace,Consolas,monospace; color:var(--card);
-    background:var(--accent); width:26px; height:26px; border-radius:8px;
-    display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; align-self:center; }
-  .name{ font-size:19px; font-weight:640; letter-spacing:-.01em; }
-  .badge{ font:600 11px/1 ui-monospace,Consolas,monospace; letter-spacing:.04em; text-transform:uppercase;
-    padding:5px 9px; border-radius:999px; border:1px solid var(--line); color:var(--sub); align-self:center; }
-  .badge.safe{ color:#4f7a3f; border-color:color-mix(in srgb,#4f7a3f 35%,transparent);
-    background:color-mix(in srgb,#4f7a3f 10%,transparent); }
-  .badge.font{ color:#a8722a; border-color:color-mix(in srgb,#a8722a 35%,transparent);
-    background:color-mix(in srgb,#a8722a 10%,transparent); }
-  .pitch{ color:var(--sub); font-size:14px; margin:8px 0 16px; max-width:66ch; }
-  .pitch b{ color:var(--fg); font-weight:600; }
+  /* ---- app two-pane ----------------------------------------------------- */
+  .app{ display:grid; grid-template-columns:minmax(260px,354px) 1fr; align-items:start; }
+  @media (max-width:860px){ .app{ grid-template-columns:1fr; } }
 
-  /* one uniform dark panel for every design — the terminal is the terminal */
-  .term{ background:var(--panel); border-radius:11px; padding:15px 16px; overflow-x:auto; }
-  .row{ display:flex; align-items:center; gap:12px; }
-  .row + .row{ margin-top:11px; }
-  .tag{ font:600 10px/1 ui-monospace,"Cascadia Code",Consolas,monospace; letter-spacing:.1em; text-transform:uppercase;
-    color:#6f665c; flex:0 0 58px; }
-  .tag.hot{ color:#b06a52; }
+  .rail{ position:sticky; top:0; align-self:start; border-right:1px solid var(--rule);
+    max-height:calc(100vh - var(--bar-h)); display:flex; flex-direction:column; }
+  @media (max-width:860px){ .rail{ position:static; border-right:0; border-bottom:1px solid var(--rule); max-height:none; } }
+  .filters{ padding:14px clamp(12px,2vw,16px) 12px; border-bottom:1px solid var(--rule);
+    display:flex; flex-direction:column; gap:10px; }
+  .segrow{ display:flex; flex-wrap:wrap; gap:6px; }
+  .seg{ font-family:var(--mono); font-size:11.5px; color:var(--dim); background:transparent;
+    border:1px solid var(--rule); border-radius:999px; padding:5px 11px; cursor:pointer; transition:.15s ease; }
+  .seg:hover{ color:var(--ink); border-color:var(--faint); }
+  .seg[aria-pressed="true"]{ color:var(--void); background:var(--accent); border-color:var(--accent); font-weight:600; }
+  .fonttoggle{ display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:11.5px;
+    color:var(--dim); cursor:pointer; user-select:none; }
+  .fonttoggle input{ accent-color:var(--accent); width:14px; height:14px; }
 
-  /* preview rows are GENERATED from the engine's real ANSI output.
-     .r = one SGR run (inline-block so bg bands are uniform, terminal-cell-like);
-     .g = a PUA glyph (powerline arrow / round cap / branch) emulated in CSS/SVG. */
-  .bar{ font:13.5px/1 "Cascadia Code",ui-monospace,"SF Mono",Menlo,Consolas,monospace; white-space:pre; }
-  .bar.hot{ font-size:12.5px; }
-  .bar .r{ display:inline-block; height:1.62em; line-height:1.62em; white-space:pre; vertical-align:top; }
-  .bar .g{ display:inline-block; width:.6em; height:1.62em; vertical-align:top; }
-  .bar .g.br{ padding:.16em .06em; }
-  .bar .g i{ display:block; width:100%; height:100%; }
+  .list{ overflow-y:auto; padding:6px; scrollbar-width:thin; scrollbar-color:var(--faint) transparent; }
+  .list::-webkit-scrollbar{ width:9px; }
+  .list::-webkit-scrollbar-thumb{ background:var(--faint); border-radius:9px; border:2px solid var(--void); }
+  .grp{ font-family:var(--mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--mut); padding:14px 10px 6px; }
+  .row{ display:grid; grid-template-columns:26px 1fr auto; align-items:center; gap:11px;
+    width:100%; text-align:left; background:transparent; border:1px solid transparent; border-radius:8px;
+    padding:9px 11px; cursor:pointer; color:inherit; font:inherit; }
+  .row:hover{ background:var(--panel); }
+  .row[aria-selected="true"]{ background:var(--panel2); border-color:var(--faint); }
+  .row[aria-selected="true"] .rnum{ color:var(--accent); }
+  .row[aria-selected="true"] .rname{ color:var(--ink); }
+  .rnum{ font-family:var(--mono); font-size:14px; font-weight:600; color:var(--mut);
+    font-variant-numeric:tabular-nums; text-align:right; transition:color .2s; }
+  .rname{ font-size:13.5px; font-weight:500; letter-spacing:-.01em; color:var(--dim);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rbadge{ font-family:var(--mono); font-size:9px; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--mut); border:1px solid var(--rule); border-radius:5px; padding:3px 5px; white-space:nowrap; }
+  .rbadge.safe{ color:#7fae6b; border-color:#33502a; }
+  .rbadge.font{ color:#c79154; border-color:#4d3a1f; }
 
-  /* group headings */
-  .grouphd{ display:flex; align-items:baseline; gap:14px; margin:38px 2px 2px; }
-  .grouphd:first-child{ margin-top:6px; }
-  .grouphd h2{ font-size:15px; font-weight:700; letter-spacing:-.01em; margin:0; white-space:nowrap; }
-  .grouphd span{ font:600 11px/1 ui-monospace,Consolas,monospace; letter-spacing:.08em;
-    text-transform:uppercase; color:var(--sub); white-space:nowrap; }
-  .grouphd hr{ flex:1; border:0; border-top:1px solid var(--line); }
+  /* ---- stage ------------------------------------------------------------ */
+  .stage{ position:sticky; top:0; padding:clamp(16px,3vw,34px) clamp(16px,4vw,44px);
+    min-height:calc(100vh - var(--bar-h)); display:flex; flex-direction:column; gap:20px; }
+  @media (max-width:860px){ .stage{ order:-1; min-height:0; z-index:5; background:var(--void); border-bottom:1px solid var(--rule); } }
+  .stagehd{ display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  .stagenum{ font-family:var(--mono); font-size:clamp(40px,7vw,64px); font-weight:600; line-height:.9;
+    color:var(--accent); font-variant-numeric:tabular-nums; transition:color .35s ease; }
+  .stagemeta{ display:flex; flex-direction:column; gap:4px; }
+  .stagename{ font-family:var(--mono); font-size:clamp(18px,2.4vw,23px); font-weight:600; letter-spacing:-.01em; }
+  .stagetag{ font-family:var(--mono); font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--mut); }
+  .pitch{ color:var(--dim); font-size:14px; max-width:64ch; margin:0; }
+  .pitch b{ color:var(--ink); font-weight:600; }
 
-  .foot{ margin-top:34px; padding:18px 20px; border:1px dashed var(--line); border-radius:14px;
-    background:color-mix(in srgb,var(--accent) 6%,transparent); font-size:14.5px; }
-  .foot b{ color:var(--accent); }
+  .term{ border:1px solid var(--rule); border-radius:12px; overflow:hidden;
+    background:linear-gradient(180deg,#101216,#0c0d10); box-shadow:0 20px 50px rgba(0,0,0,.45); }
+  .termbar{ display:flex; align-items:center; gap:7px; padding:9px 13px; border-bottom:1px solid var(--rule); background:#0f1115; }
+  .dot{ width:11px; height:11px; border-radius:50%; }
+  .termttl{ margin-left:8px; font-family:var(--mono); font-size:11px; color:var(--mut); }
+  .termbody{ padding:14px 15px 4px; font-family:var(--mono); font-size:12.5px; overflow-x:auto; }
+  .cmdline .p{ color:#6fae8f; } .cmdline .c{ color:var(--dim); }
+  .out{ color:#454b54; margin:2px 0 0; }
+  .slrow{ display:flex; align-items:center; gap:12px; padding:12px 0 14px; }
+  .sltag{ font-family:var(--mono); font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--mut); flex:0 0 66px; }
+  .sltag.hot{ color:#b06a52; }
 
-  .howto{ margin:18px 0 6px; padding:14px 18px; border-radius:12px;
-    background:color-mix(in srgb,var(--accent) 10%,transparent);
-    border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);
-    font-size:14.5px; display:flex; gap:12px; align-items:baseline; flex-wrap:wrap; }
-  .howto code{ font:700 13.5px/1 ui-monospace,"Cascadia Code",Consolas,monospace;
-    color:var(--accent); background:var(--card); padding:5px 10px; border-radius:8px;
-    border:1px solid var(--line); white-space:nowrap; }
-  .cardcmd{ margin-top:12px; font:600 12px/1 ui-monospace,Consolas,monospace;
-    color:var(--sub); display:flex; align-items:center; gap:8px; }
-  .cardcmd code{ color:var(--accent); background:color-mix(in srgb,var(--accent) 9%,transparent);
-    padding:4px 8px; border-radius:6px; font-weight:700; }
+  /* rendered status-line previews (from engine ANSI via ansi2html) */
+  .sl{ font-family:var(--mono); font-size:13px; white-space:pre; }
+  .sl.sm{ font-size:11px; }
+  .sl .r{ display:inline-block; height:1.6em; line-height:1.6em; white-space:pre; vertical-align:top; }
+  .sl .g{ display:inline-block; width:.6em; height:1.6em; vertical-align:top; }
+  .sl .g.br{ padding:.15em .05em; }
+  .sl .g i{ display:block; width:100%; height:100%; }
+
+  .pick{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:2px; }
+  .replybtn{ font-family:var(--mono); font-size:13px; font-weight:600; color:var(--void);
+    background:var(--accent); border:0; border-radius:9px; padding:10px 16px; cursor:pointer; transition:filter .15s, background .35s ease; }
+  .replybtn:hover{ filter:brightness(1.08); }
+  .pickhint{ font-size:12.5px; color:var(--mut); }
+  .pickhint code{ font-family:var(--mono); color:var(--dim); }
+
+  /* ---- signature: pinned live status bar -------------------------------- */
+  .livebar{ position:fixed; left:0; right:0; bottom:0; height:var(--bar-h); z-index:40;
+    border-top:1px solid var(--rule); background:#0b0c0f; display:flex; align-items:center; gap:14px; padding:0 clamp(14px,3vw,28px); }
+  .livelabel{ font-family:var(--mono); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--mut); flex:0 0 auto; display:flex; align-items:center; gap:7px; }
+  .pulse{ width:7px; height:7px; border-radius:50%; background:var(--accent); transition:background .35s ease; }
+  @media (prefers-reduced-motion:no-preference){ .pulse{ animation:pulse 2.4s ease-in-out infinite; } }
+  @keyframes pulse{ 0%,100%{ opacity:.35; } 50%{ opacity:1; } }
+  .livewrap{ position:relative; flex:1; min-width:0; overflow-x:auto; height:100%; display:flex; align-items:center; scrollbar-width:none; }
+  .livewrap::-webkit-scrollbar{ display:none; }
+  .livelayer{ position:absolute; left:0; top:50%; transform:translateY(-50%); transition:opacity .8s ease; }
+  .livewrap.showhot .lv-calm{ opacity:0; } .livewrap.showhot .lv-hot{ opacity:1; }
+  .lv-hot{ opacity:0; }
+
+  .hud{ position:fixed; right:16px; bottom:calc(var(--bar-h) + 16px); z-index:41;
+    font-family:var(--mono); font-size:13px; color:var(--ink); background:var(--panel2);
+    border:1px solid var(--faint); border-radius:9px; padding:8px 12px; opacity:0; transform:translateY(6px);
+    transition:.15s ease; pointer-events:none; }
+  .hud.on{ opacity:1; transform:none; }
+  .hud b{ color:var(--accent); }
+  .toast{ position:fixed; left:50%; bottom:calc(var(--bar-h) + 18px); transform:translate(-50%,8px);
+    z-index:41; font-family:var(--mono); font-size:12.5px; color:var(--void); background:var(--accent);
+    padding:8px 14px; border-radius:8px; opacity:0; transition:.2s ease; pointer-events:none; }
+  .toast.on{ opacity:1; transform:translate(-50%,0); }
+
+  :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
 </style>
 
-<div class="wrap">
-  <header>
-    <p class="kick">statusLine · gallery</p>
-    <h1>Twenty-seven directions. Pick one.</h1>
-    <p class="intro">Every preview below is <b>generated from the engine's real terminal output</b> — same characters, same colors, nothing embellished. Each card shows a calm and a high-usage state so you can see the meters warn. <b>Badges:</b> <span style="color:#4f7a3f">font-safe</span> works anywhere; <span style="color:#a8722a">powerline / emoji</span> need glyphs your terminal already renders.</p>
-    <div class="howto">🎨 <span>Found one you like? Go back to Claude Code and reply with its <b>number</b>.</span> <span>To change your design anytime later, run</span> <code>/custom-statusline</code> <span>— same flow, forever.</span></div>
-  </header>
+<header>
+  <p class="eyebrow">Claude Code · statusLine · 27 designs</p>
+  <h1>Pick a status line<b>.</b></h1>
+  <p class="lede">Every design is real engine output, not a mockup. Arrow-key the list or type a number, then reply with it in Claude Code — or run <code>/custom-statusline</code> anytime to change.</p>
+</header>
 
-  <div id="cards"></div>
+<div class="app">
+  <aside class="rail">
+    <div class="filters">
+      <div class="segrow" id="groups"></div>
+      <label class="fonttoggle"><input type="checkbox" id="safeonly"> font-safe only <span id="safecount" style="color:var(--mut)"></span></label>
+    </div>
+    <div class="list" id="list" role="listbox" aria-label="Status line designs" tabindex="0"></div>
+  </aside>
 
-  <div class="foot">
-    <b>How this works:</b> reply with a number in Claude Code and the design goes live at your next prompt. The one command to remember: <code style="font-family:ui-monospace,Consolas,monospace;color:var(--accent);font-weight:700">/custom-statusline</code> — it reopens this gallery and switches your design, anytime, on any machine with this skill installed. Want a tweak to a design first? Just describe it — e.g. "3, but keep the cost segment."
+  <main class="stage" id="stage" aria-live="polite"></main>
+</div>
+
+<div class="livebar">
+  <span class="livelabel"><span class="pulse"></span> live</span>
+  <div class="livewrap" id="livewrap">
+    <span class="livelayer lv-calm sl" id="lvCalm"></span>
+    <span class="livelayer lv-hot sl" id="lvHot"></span>
   </div>
 </div>
 
+<div class="hud" id="hud"></div>
+<div class="toast" id="toast"></div>
+
 <script>
-// ---- card metadata (previews live in PREVIEWS below, generated) ------------
 const CARDS=[
   { group:'Everyday', name:'Kiln Flow', badge:['powerline','font'],
     pitch:'A refined take on what you have now — warm bars that flow into one another with pointed powerline seams. The <b>context gauge is the one full-color bar</b>; usage and metrics ride quietly behind it.' },
-  { name:'Nightshade', badge:['powerline','font'],
+  { group:'Everyday', name:'Nightshade', badge:['powerline','font'],
     pitch:'A cooler world: each stat floats as its own rounded capsule on the dark. Lavender identity, mint-to-rose meters. <b>Reads calmer and more modern</b> than connected bars — more air, less weight.' },
-  { name:'Hairline', badge:['font-safe','safe'],
+  { group:'Everyday', name:'Hairline', badge:['font-safe','safe'],
     pitch:'No fills at all — just colored text divided by thin rules. The <b>quietest option</b>, and it needs no special font. Color still carries the signal: meters shift green→amber→red as they climb.' },
-  { name:'Gauge', badge:['font-safe','safe'],
+  { group:'Everyday', name:'Gauge', badge:['font-safe','safe'],
     pitch:'Turns the numbers into little block-bars. You <b>see the fill</b> before you read the digits — context on an 8-cell bar, the two windows on 4-cell bars, with fractional edge cells for precision. Best if headroom is what you watch.' },
-  { name:'Blocks', badge:['font-safe','safe'],
+  { group:'Everyday', name:'Blocks', badge:['font-safe','safe'],
     pitch:'The colored-bar look with <b>hard rectangular edges instead of arrows</b> — so it needs no powerline font at all. Blunt, high-contrast, and reads instantly. A safe twin of Kiln Flow.' },
-
   { group:'Expressive', name:'Claymorphic', badge:['round caps','font'],
     pitch:'Soft pastel <b>clay pills</b> — a nod to Claycraft. In the terminal the puffy look becomes rounded powerline caps; the muted sand-and-terracotta palette is exact. The warmest, softest option here.' },
-  { name:'Arcade HUD', badge:['emoji','font'],
+  { group:'Expressive', name:'Arcade HUD', badge:['emoji','font'],
     pitch:'A <b>game HUD</b>: context is a ❤ health bar, the two windows are ⚡ energy meters, cost is loot. Uses emoji plus block-bars — playful, and it needs emoji glyphs (most terminals have them).' },
-  { name:'Gradient Sweep', badge:['font-safe','safe'],
+  { group:'Expressive', name:'Gradient Sweep', badge:['font-safe','safe'],
     pitch:'One smooth color sweep flows across the whole line — coral → gold → sage → teal → violet, recomputed per character. Fully terminal-native. Under load the sweep never breaks: a <b>deep amber wash</b> rises beneath a percentage at 50%, deepening to a <b>bold ember chip</b> at 80% — beauty first, alarm intact.' },
-  { name:'Synthwave', badge:['font-safe','safe'],
+  { group:'Expressive', name:'Synthwave', badge:['font-safe','safe'],
     pitch:'Neon cyan identity, magenta seams on near-black. No glow in a terminal — the bright neons carry it — and at 80%+ a meter lights up for real: an <b>inverted neon sign</b>, near-black digits on hot-pink. Meters warn: cyan → amber → hot-pink.' },
-  { name:'Phosphor LCD', badge:['font-safe','safe'],
+  { group:'Expressive', name:'Phosphor LCD', badge:['font-safe','safe'],
     pitch:'Single-hue <b>amber phosphor</b>, like a Pip-Boy or old CRT. Everything uppercase, <b>brightness carries emphasis</b> — dim labels, bright values, block-bar meters that burn brighter past 50% and go <b>overheat orange</b> past 80%. The most nostalgic — and fully font-safe.' },
-
   { group:'Style studies', name:'Brutalist', badge:['font-safe','safe'],
     pitch:'Raw and unpadded: all-caps, square brackets, underscores, no decoration. One shout color — <b>metrics sit in concrete gray, promote to bone-white at 50%, and at 80% any limit goes red</b> and slams a solid !! LIMIT slab onto the end of the line.' },
-  { name:'Bauhaus', badge:['font-safe','safe'],
+  { group:'Style studies', name:'Bauhaus', badge:['font-safe','safe'],
     pitch:'Primary triad on charcoal. <b>Geometry encodes state</b>: a blue ● is calm, a yellow ■ is warming, a red ▲ is critical — you read the shapes before the numbers. The ●■▲ mark opens the line like a signature.' },
-  { name:'Swiss', badge:['font-safe','safe'],
+  { group:'Style studies', name:'Swiss', badge:['font-safe','safe'],
     pitch:'Grid discipline, objective typography, and exactly <b>one red accent</b> — the period after the model name, plus any meter past 80%. Warming meters go <b>bold, not colored</b>, and digits are padded so the columns never move. The most restrained of all twenty-seven.' },
-  { name:'Wabi-sabi', badge:['font-safe','safe'],
+  { group:'Style studies', name:'Wabi-sabi', badge:['font-safe','safe'],
     pitch:'Moss, stone, and mist — <b>meters are moon phases</b>: ○ empty, ◔ waxing, ◐ half, ● full(rust). No percent signs anywhere; you glance at the moons like a calendar. The gentlest possible warning system.' },
-  { name:'Glassmorphic', badge:['round caps','font'],
+  { group:'Style studies', name:'Glassmorphic', badge:['round caps','font'],
     pitch:'Frosted panes floating over the dark, icy mint→rose meters. Real blur doesn\'t exist in a terminal — the panes are <b>soft-tinted rounded capsules</b> instead, which keeps the airy layered feel.' },
-  { name:'Memphis', badge:['font-safe','safe'],
+  { group:'Style studies', name:'Memphis', badge:['font-safe','safe'],
     pitch:'1980s pop: clashing <b>pink/teal/yellow/purple</b> confetti with <b>▚▞ zigzag separators</b> that cycle hues so every joint clashes on purpose. Meters flip teal → yellow → hot-pink and go bold at critical. The most fun to look at, the least quiet.' },
-  { name:'Art Deco', badge:['font-safe','safe'],
+  { group:'Style studies', name:'Art Deco', badge:['font-safe','safe'],
     pitch:'Champagne gold on charcoal with <b>fan ornaments ❯❯ ❮❮ framing the model</b> and long dash rules between facts. Uppercase smallwork, emerald→gold→ruby meters. Gatsby doing DevOps.' },
-  { name:'Nord', badge:['font-safe','safe'],
+  { group:'Style studies', name:'Nord', badge:['font-safe','safe'],
     pitch:'The beloved arctic palette: frost cyan, snow, glacier blues. <b>Minimal punctuation, just breathing room</b> — the quietest colored option. Meters use Nord\'s own aurora green/yellow/red.' },
-  { name:'Dracula', badge:['font-safe','safe'],
+  { group:'Style studies', name:'Dracula', badge:['font-safe','safe'],
     pitch:'The classic editor theme\'s exact palette on its own #282A36 canvas — purple identity, pink branch, comment-blue labels, <b>:: separators</b> straight out of the syntax highlighting. Critical meters go bold as well as red. If your editor already runs Dracula, the status line joins the family seamlessly.' },
-  { name:'Terminal Rain', badge:['font-safe','safe'],
+  { group:'Style studies', name:'Terminal Rain', badge:['font-safe','safe'],
     pitch:'Matrix greens where <b>brightness is hierarchy</b> — the model glows brightest, labels sink into dark moss. Meters break the monochrome only to warn: acid-yellow, then hot orange. ⋮ separators like falling code.' },
-
   { group:'Game art styles', name:'Flat', badge:['blocks','safe'],
     pitch:'<b>Monument Valley</b>: soft pastel geometry — rose, sand, lavender, teal — laid flat with no outlines, no gradients, no noise. Every meter is its own tile that <b>shifts teal → peach → dusty rose</b>; serene even when warning, never a scream.' },
-  { name:'Vector', badge:['stroke caps','font'],
+  { group:'Game art styles', name:'Vector', badge:['stroke caps','font'],
     pitch:'Zero fills, all stroke — <b>vector arcade linework</b> floating on the dark. Every stat rides between bold angle caps ❬ ❭ drawn in its own state color: cyan calm → yellow warm → magenta critical. No backgrounds anywhere — the stroke color is the whole signal.' },
-  { name:'Geometric Art', badge:['font-safe','safe'],
+  { group:'Game art styles', name:'Geometric Art', badge:['font-safe','safe'],
     pitch:'<b>Geometry Wars</b>: neon particles for a dark terminal. Every meter flies its own geometric glyph — ◇ △ ▽ — shifting lime → orange → magenta and <b>filling solid</b> ◆ ▲ ▼ as pressure builds, bold at critical. Faint grid-blue ┆ separators hold the lanes.' },
-  { name:'Pixel', badge:['font-safe','safe'],
+  { group:'Game art styles', name:'Pixel', badge:['font-safe','safe'],
     pitch:'<b>Stardew Valley</b>: chunky ▓▒░ pixel bars in the farm palette — leaf green filling to wheat gold to berry red, cost as ⛁ coin. The wood-brown model tag reads like a crafting-menu label.' },
-  { name:'Cartoon', badge:['round caps','font'],
+  { group:'Game art styles', name:'Cartoon', badge:['round caps','font'],
     pitch:'<b>Team Fortress 2</b>: RED vs BLU team colors on parchment cream, thick rounded chips. The context gauge <b>joins Mann-Co orange at 50%</b>, and when it runs critical it <b>switches teams to RED and gains a shout</b> — ctx 88% !' },
-  { name:'Cel Shading', badge:['blocks','safe'],
+  { group:'Game art styles', name:'Cel Shading', badge:['blocks','safe'],
     pitch:'<b>Wind Waker</b>: bright flat sea-and-grass panels divided by <b>dark ink seams</b> — the hand-drawn outline stroke that defines cel shading, one column wide between every panel and capping both ends. Sail-red model, ocean directory, and meters that shade grass and sand → sunset → sail-red as the pressure climbs.' },
-  { name:'Monochromatic', badge:['font-safe','safe'],
+  { group:'Game art styles', name:'Monochromatic', badge:['font-safe','safe'],
     pitch:'<b>Inside / Limbo</b>: grayscale fog where brightness is the only hierarchy — until something crosses 80%, when <b>the single red in the whole world</b> appears, in bold. The most cinematic warning of all 27.' },
 ];
 
@@ -274,27 +334,147 @@ const PREVIEWS = {
 };
 // PREVIEWS:END
 
-const GROUP_SUB = { 'Everyday':'practical daily-drivers', 'Expressive':'bolder, for fun',
-  'Style studies':'ten design movements, translated to a terminal',
-  'Game art styles':'seven game looks, from your reference sheet' };
+// derive each design's identity hue from its CALM preview (the model tag / brand
+// colors), not the hot state — otherwise every accent becomes the alarm red.
+// Prefer the earliest reasonably-saturated color, which is the identity segment.
+function accentOf(n){
+  const html=(PREVIEWS[n]&&PREVIEWS[n].calm)||'';
+  const cols=[...html.matchAll(/rgb\((\d+),(\d+),(\d+)\)/g)].map(m=>[+m[1],+m[2],+m[3]]);
+  for(const [r,g,b] of cols){                       // first identity-strength color wins
+    const mx=Math.max(r,g,b), mn=Math.min(r,g,b);
+    const sat=mx===0?0:(mx-mn)/mx, lum=mx/255;       // no upper lum cap: bright pastels
+    if(sat>=.33 && lum>=.42) return `rgb(${r},${g},${b})`;  // (lavender, purple) are wanted
+  }
+  let best=null, bestS=-1;                           // fallback: most saturated legible
+  for(const [r,g,b] of cols){
+    const mx=Math.max(r,g,b), mn=Math.min(r,g,b);
+    const sat=mx===0?0:(mx-mn)/mx, lum=mx/255;
+    if(lum<.4) continue;
+    if(sat>bestS){ bestS=sat; best=[r,g,b]; }
+  }
+  return best?`rgb(${best[0]},${best[1]},${best[2]})`:'#e2896a';
+}
 
-document.getElementById('cards').innerHTML = CARDS.map((d,i)=>{
-  const bcls = d.badge[1]==='safe' ? 'safe' : 'font';
-  const pv = PREVIEWS[i+1] || { calm:'', hot:'' };
-  const hd = d.group
-    ? `<div class="grouphd"><h2>${d.group}</h2><hr><span>${GROUP_SUB[d.group]||''}</span></div>` : '';
-  return `${hd}<div class="card">
-    <div class="head">
-      <span class="num">${i+1}</span>
-      <span class="name">${d.name}</span>
-      <span class="badge ${bcls}">${d.badge[0]}</span>
+const GROUPS=['All','Everyday','Expressive','Style studies','Game art styles'];
+const state={ group:'All', safeOnly:false, sel:0, buf:'', bufTimer:null };
+
+const $=s=>document.querySelector(s);
+const list=$('#list'), stage=$('#stage'), hud=$('#hud'), toast=$('#toast');
+const lvCalm=$('#lvCalm'), lvHot=$('#lvHot'), livewrap=$('#livewrap');
+
+function matches(i){
+  const d=CARDS[i];
+  if(state.group!=='All' && d.group!==state.group) return false;
+  if(state.safeOnly && d.badge[1]!=='safe') return false;
+  return true;
+}
+function visibleIdx(){ return CARDS.map((_,i)=>i).filter(matches); }
+
+function buildFilters(){
+  const g=$('#groups');
+  g.innerHTML=GROUPS.map(x=>`<button class="seg" data-g="${x}" aria-pressed="${x===state.group}">${x==='Style studies'?'Style':x==='Game art styles'?'Game art':x}</button>`).join('');
+  g.querySelectorAll('.seg').forEach(b=>b.onclick=()=>{ state.group=b.dataset.g; syncFilters(); renderList(); ensureVisibleSelection(); });
+  const safe=CARDS.filter(d=>d.badge[1]==='safe').length;
+  $('#safecount').textContent='('+safe+')';
+  $('#safeonly').onchange=e=>{ state.safeOnly=e.target.checked; renderList(); ensureVisibleSelection(); };
+}
+function syncFilters(){ document.querySelectorAll('#groups .seg').forEach(b=>b.setAttribute('aria-pressed', b.dataset.g===state.group)); }
+
+function renderList(){
+  const vis=visibleIdx();
+  let html='', lastGroup=null;
+  for(const i of vis){
+    const d=CARDS[i];
+    if(d.group!==lastGroup && state.group==='All'){ html+=`<div class="grp">${d.group}</div>`; lastGroup=d.group; }
+    html+=`<button class="row" role="option" data-i="${i}" aria-selected="${i===state.sel}">
+      <span class="rnum">${i+1}</span>
+      <span class="rname">${d.name}</span>
+      <span class="rbadge ${d.badge[1]}">${d.badge[0]}</span>
+    </button>`;
+  }
+  list.innerHTML=html||`<div class="grp">no designs match</div>`;
+  list.querySelectorAll('.row').forEach(r=>{ r.onclick=()=>select(+r.dataset.i); });
+}
+
+function select(i, opts){
+  opts=opts||{};
+  state.sel=i; const d=CARDS[i], pv=PREVIEWS[i+1]||{calm:'',hot:''};
+  document.documentElement.style.setProperty('--accent', accentOf(i+1));
+
+  stage.innerHTML=`
+    <div class="stagehd">
+      <span class="stagenum">${String(i+1).padStart(2,'0')}</span>
+      <span class="stagemeta">
+        <span class="stagename">${d.name}</span>
+        <span class="stagetag">${d.group} · ${d.badge[0]}</span>
+      </span>
     </div>
     <p class="pitch">${d.pitch}</p>
     <div class="term">
-      <div class="row"><span class="tag">calm</span><span class="bar">${pv.calm}</span></div>
-      <div class="row"><span class="tag hot">high use</span><span class="bar hot">${pv.hot}</span></div>
+      <div class="termbar">
+        <span class="dot" style="background:#ff5f56"></span><span class="dot" style="background:#ffbd2e"></span><span class="dot" style="background:#27c93f"></span>
+        <span class="termttl">~/my-project — Claude Code</span>
+      </div>
+      <div class="termbody">
+        <div class="cmdline"><span class="p">›</span> <span class="c">claude</span></div>
+        <p class="out">· · · working · · ·</p>
+        <div class="slrow"><span class="sltag">calm</span><span class="sl">${pv.calm}</span></div>
+        <div class="slrow"><span class="sltag hot">high use</span><span class="sl">${pv.hot}</span></div>
+      </div>
     </div>
-    <div class="cardcmd">want this one? reply <code>${i+1}</code> in Claude Code &nbsp;·&nbsp; or later: <code>/custom-statusline</code> → ${i+1}</div>
-  </div>`;
-}).join('');
+    <div class="pick">
+      <button class="replybtn" id="reply">reply <b style="font-weight:800">${i+1}</b> in Claude Code</button>
+      <span class="pickhint">or later, <code>/custom-statusline → ${i+1}</code></span>
+    </div>`;
+  $('#reply').onclick=()=>copyNumber(i+1);
+
+  lvCalm.innerHTML=pv.calm; lvHot.innerHTML=pv.hot;
+
+  list.querySelectorAll('.row').forEach(r=>r.setAttribute('aria-selected', +r.dataset.i===i));
+  if(!opts.noScroll){
+    const row=list.querySelector(`.row[data-i="${i}"]`);
+    if(row) row.scrollIntoView({block:'nearest'});
+  }
+}
+function ensureVisibleSelection(){
+  const vis=visibleIdx();
+  if(!vis.includes(state.sel) && vis.length) select(vis[0]);
+}
+
+if(matchMedia('(prefers-reduced-motion: no-preference)').matches){
+  let hot=false;
+  setInterval(()=>{ hot=!hot; livewrap.classList.toggle('showhot', hot); }, 3200);
+} else {
+  livewrap.classList.add('showhot');
+}
+
+function copyNumber(n){
+  const show=()=>{ toast.textContent='copied "'+n+'" — paste it in Claude Code'; toast.classList.add('on'); setTimeout(()=>toast.classList.remove('on'),1900); };
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(String(n)).then(show).catch(show); }
+  else show();
+}
+
+function move(delta){
+  const vis=visibleIdx(); if(!vis.length) return;
+  let p=vis.indexOf(state.sel); if(p<0) p=0;
+  p=Math.max(0,Math.min(vis.length-1,p+delta));
+  select(vis[p]);
+}
+window.addEventListener('keydown',e=>{
+  if(e.target.matches('input')) return;
+  if(e.key==='ArrowDown'||e.key==='j'){ e.preventDefault(); move(1); }
+  else if(e.key==='ArrowUp'||e.key==='k'){ e.preventDefault(); move(-1); }
+  else if(e.key==='Enter'){ e.preventDefault(); copyNumber(state.sel+1); }
+  else if(/^[0-9]$/.test(e.key)){
+    state.buf=(state.buf+e.key).slice(-2);
+    let n=parseInt(state.buf,10);
+    if(n>27){ state.buf=e.key; n=parseInt(state.buf,10); }
+    hud.innerHTML='go to <b>'+state.buf+'</b>'; hud.classList.add('on');
+    clearTimeout(state.bufTimer);
+    state.bufTimer=setTimeout(()=>{ hud.classList.remove('on'); state.buf=''; }, 900);
+    if(n>=1&&n<=27) select(n-1);
+  }
+});
+
+buildFilters(); renderList(); select(0);
 </script>
