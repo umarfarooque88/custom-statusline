@@ -54,7 +54,8 @@ try {
 const has = (v) => v != null && !isNaN(v);
 const pct = (v) => Math.round(v) + "%";
 const costS = has(S.cost) ? "$" + Number(S.cost).toFixed(2) : null;
-const durS  = has(S.durMs) ? (S.durMs / 60000).toFixed(1) + "m" : null;
+const durS  = has(S.durMs) ? (() => { const m = Math.floor(S.durMs / 60000);
+  return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); })() : null;   // hh:mm
 const hasLines = S.add != null || S.del != null;
 
 // ---------- ANSI helpers ----------------------------------------------------
