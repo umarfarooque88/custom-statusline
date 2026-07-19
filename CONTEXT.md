@@ -71,7 +71,7 @@ file explains the history, the user, and the decisions — read both.
 
 ## Immediate next steps (user intent)
 
-1. User will create a GitHub repo and push (likely under dev@greenmintlabs.com
+1. User will create a GitHub repo and push (likely under umarfaruk1026@gmail.com
    account). Then: fill `<repo-URL>` placeholders in README.md + CLAUDE.md and
    the empty URL comment at statusline.sh line 3; commit.
 2. After push, optionally test the real end-to-end: fresh clone by URL on a
