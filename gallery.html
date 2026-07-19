@@ -82,6 +82,18 @@
   .foot{ margin-top:34px; padding:18px 20px; border:1px dashed var(--line); border-radius:14px;
     background:color-mix(in srgb,var(--accent) 6%,transparent); font-size:14.5px; }
   .foot b{ color:var(--accent); }
+
+  .howto{ margin:18px 0 6px; padding:14px 18px; border-radius:12px;
+    background:color-mix(in srgb,var(--accent) 10%,transparent);
+    border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);
+    font-size:14.5px; display:flex; gap:12px; align-items:baseline; flex-wrap:wrap; }
+  .howto code{ font:700 13.5px/1 ui-monospace,"Cascadia Code",Consolas,monospace;
+    color:var(--accent); background:var(--card); padding:5px 10px; border-radius:8px;
+    border:1px solid var(--line); white-space:nowrap; }
+  .cardcmd{ margin-top:12px; font:600 12px/1 ui-monospace,Consolas,monospace;
+    color:var(--sub); display:flex; align-items:center; gap:8px; }
+  .cardcmd code{ color:var(--accent); background:color-mix(in srgb,var(--accent) 9%,transparent);
+    padding:4px 8px; border-radius:6px; font-weight:700; }
   .legend{ display:flex; gap:16px; flex-wrap:wrap; margin-top:10px; font-size:12.5px; color:var(--sub); }
   .legend span{ display:inline-flex; align-items:center; gap:6px; }
   .legend i{ width:11px; height:11px; border-radius:3px; display:inline-block; }
@@ -91,13 +103,14 @@
   <header>
     <p class="kick">statusLine · gallery</p>
     <h1>Twenty-seven directions. Pick one.</h1>
-    <p class="intro">Each is a different structural take on the same data — real color, your live values (<code>greenloom</code>, branch <code>dev</code>). The first five are everyday daily-drivers; the next five push into <b>expressive</b> territory — claymorphic, gamified, neon and more. Every card shows a calm and a high-usage state so you can see the meters warn. Reply with a number and I'll wire it in. <b>Badges:</b> <span style="color:#4f7a3f">font-safe</span> works anywhere; <span style="color:#a8722a">powerline / emoji</span> need glyphs your terminal already renders.</p>
+    <p class="intro">Each is a different structural take on the same data — real color, live example values. Every card shows a calm and a high-usage state so you can see the meters warn. <b>Badges:</b> <span style="color:#4f7a3f">font-safe</span> works anywhere; <span style="color:#a8722a">powerline / emoji</span> need glyphs your terminal already renders.</p>
+    <div class="howto">🎨 <span>Found one you like? Go back to Claude Code and reply with its <b>number</b>.</span> <span>To change your design anytime later, run</span> <code>/customize-status-line</code> <span>— same flow, forever.</span></div>
   </header>
 
   <div id="cards"></div>
 
   <div class="foot">
-    <b>To choose:</b> tell me the number (or name). I'll swap it into <code style="font-family:ui-monospace,Consolas,monospace">~/.claude/statusline-command.sh</code>, keep the graceful-degradation and Windows git fix, and you'll see it on your next prompt. Want a tweak to one first? Say so — e.g. "3, but keep the cost segment."
+    <b>How this works:</b> reply with a number in Claude Code and the design goes live at your next prompt. The one command to remember: <code style="font-family:ui-monospace,Consolas,monospace;color:var(--accent);font-weight:700">/customize-status-line</code> — it reopens this gallery and switches your design, anytime, on any machine with this skill installed. Want a tweak to a design first? Just describe it — e.g. "3, but keep the cost segment."
   </div>
 </div>
 
@@ -649,6 +662,7 @@ document.getElementById('cards').innerHTML = DESIGNS.map((d,i)=>{
       <div class="row"><span class="tag">calm</span><span class="bar${cls}">${d.fn(CALM)}</span></div>
       <div class="row"><span class="tag hot">high use</span><span class="bar hot${cls}">${d.fn(HOT)}</span></div>
     </div>
+    <div class="cardcmd">want this one? reply <code>${i+1}</code> in Claude Code &nbsp;·&nbsp; or later: <code>/customize-status-line</code> → ${i+1}</div>
   </div>`;
 }).join('');
 </script>

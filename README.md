@@ -2,9 +2,13 @@
 
 27 ready-made status line designs for Claude Code, selectable by number.
 
-**To install: just tell Claude Code —** `clone <this-repo-URL>` — and it handles
-everything: puts the skill in the right place, opens the visual gallery, and
-applies the design you pick. Nothing else to run.
+**Install in two steps:**
+
+1. Tell Claude Code: `clone <this-repo-URL>` — it puts the skill in the right place.
+2. Run **`/customize-status-line`** — the gallery opens, you pick a number, done.
+
+**That's also the only command to remember:** run `/customize-status-line`
+anytime to change your design. Same command, same flow, forever.
 
 ---
 
@@ -12,7 +16,7 @@ applies the design you pick. Nothing else to run.
 
 If the user asked you to clone this repository (in any wording: "clone <url>",
 "install this", "set this up"), do ALL of the following, in order. Do not stop
-after the clone — the clone is step one of five.
+after the clone.
 
 1. **Clone into the user's skills folder** (create it if missing — a fresh
    machine usually has no `skills/` directory):
@@ -30,49 +34,23 @@ after the clone — the clone is step one of five.
 
 2. **Requirements check:** `node` must be on PATH (the engine parses JSON with
    node; jq is often missing, especially on Windows Git Bash). If node is
-   absent, stop and tell the user to install Node.js first, then continue from
-   step 3 when they confirm.
+   absent, tell the user to install Node.js before running the skill.
 
-3. **Open the gallery and ask for a number.** Open
-   `~/.claude/skills/customize-status-line/gallery.html` in the user's default
-   browser — do NOT publish it as an artifact (artifact links require a
-   claude.ai sign-in in the active browser):
-   - Windows (Git Bash): `start "" "$(cygpath -w ~/.claude/skills/customize-status-line/gallery.html)"`
-   - macOS: `open ~/.claude/skills/customize-status-line/gallery.html`
-   - Linux: `xdg-open ~/.claude/skills/customize-status-line/gallery.html`
+3. **Hand off to the skill — do NOT install anything yourself.** Tell the user
+   exactly this:
 
-   Then ask the user which design they want (a number 1–27). The gallery shows
-   every design in calm and high-usage states with font-requirement badges.
+   > Skill installed. Now run **`/customize-status-line`** — the design gallery
+   > will open in your browser and I'll set up the one you pick.
+   > (If the command isn't recognized yet, run `/reload-skills` or restart
+   > Claude Code first.)
+   >
+   > Remember that command: **`/customize-status-line`** is also how you change
+   > your design anytime later. Same command, same flow.
 
-4. **Install the chosen design:**
-
-   ```bash
-   cp ~/.claude/skills/customize-status-line/statusline.sh ~/.claude/statusline-command.sh
-   ```
-
-   Then edit the line near the top of the copied file:
-   `DESIGN="${STATUSLINE_DESIGN:-2}"` → replace `2` with the chosen number.
-
-   **Enable the status line automatically** — even if the user never ran
-   `/statusline`: merge this key into `~/.claude/settings.json` (create the
-   file with `{}` first if it doesn't exist; NEVER overwrite other keys — use a
-   small `node -e` JSON read-modify-write, not a file overwrite):
-
-   ```json
-   "statusLine": { "type": "command", "command": "bash ~/.claude/statusline-command.sh" }
-   ```
-
-5. **Verify, then confirm.** Pipe this through the installed script — success is
-   non-empty output with no error text:
-
-   ```bash
-   echo '{"model":{"display_name":"Opus 4.8"},"workspace":{"current_dir":"'"$PWD"'"},"context_window":{"used_percentage":37},"rate_limits":{"five_hour":{"used_percentage":42},"seven_day":{"used_percentage":18}},"cost":{"total_cost_usd":0.84,"total_duration_ms":540000,"total_lines_added":58,"total_lines_removed":9}}' | bash ~/.claude/statusline-command.sh
-   ```
-
-   Tell the user: the status line appears at their next prompt (or next
-   session if statusLine was just enabled), and they can switch designs anytime
-   by saying a new number or running `/customize-status-line` (available after
-   their next session start or `/reload-skills`).
+   The skill (`SKILL.md` in this repo) handles everything from there: opening
+   the gallery, taking the number, installing the engine, enabling the
+   statusLine key in settings.json automatically (even if the user never ran
+   `/statusline`), and verifying.
 
 ---
 

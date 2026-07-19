@@ -52,7 +52,9 @@ To merge `settings.json` safely on Windows, use node (jq is often absent):
 a small `node -e` script that reads the file, sets the `statusLine` key, and
 writes it back pretty-printed is the reliable route.
 
-Ensure `~/.claude/settings.json` contains (merge, don't clobber other keys):
+Ensure `~/.claude/settings.json` contains (merge, don't clobber other keys; if
+the file doesn't exist — the user never ran `/statusline` — create it as `{}`
+first, then merge; this auto-enables the status line):
 
 ```json
 "statusLine": { "type": "command", "command": "bash ~/.claude/statusline-command.sh" }
@@ -117,5 +119,10 @@ falls back to flat blocks with colors intact.
 
 ## Changing designs later
 
-Edit the `DESIGN=` line in `~/.claude/statusline-command.sh`, or set
-`STATUSLINE_DESIGN=<n>` in the environment (env wins). No reinstall needed.
+The user runs `/customize-status-line` again — same flow (gallery → number →
+install → verify). Always end a successful install by teaching this:
+"Run `/customize-status-line` anytime to change your design."
+
+Mechanically, a switch is just editing the `DESIGN=` line in
+`~/.claude/statusline-command.sh` (or `STATUSLINE_DESIGN=<n>` in the
+environment — env wins). No reinstall needed.
