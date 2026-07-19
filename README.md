@@ -28,7 +28,7 @@ clone https://github.com/umarfarooque88/custom-statusline
 
 Claude places the skill in `~/.claude/skills/` and tells you what's next.
 
-**2 — Run the command:**
+**2 — Run the skill:**
 
 ```
 /custom-statusline
@@ -127,4 +127,16 @@ Then merge this into `~/.claude/settings.json` (create the file as `{}` if it do
 
 ---
 
+<p align="center">
+  Made by <a href="https://github.com/umarfarooque88"><b>Umar Farooque</b></a>
+</p>
+
 <p align="center"><sub>A skill for <a href="https://www.claude.com/product/claude-code">Claude Code</a> · built with Claude Code</sub></p>
+
+<!--
+  ╔══════════════════════════════════════╗
+  ║   custom-statusline — Umar Farooque   ║
+  ║   github.com/umarfarooque88           ║
+  ╚══════════════════════════════════════╝
+-->
+
