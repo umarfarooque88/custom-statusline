@@ -1,0 +1,6 @@
+# Force LF everywhere — statusline.sh MUST stay LF or bash breaks on Windows
+# ("\r: command not found") when git autocrlf converts on checkout.
+* text=auto eol=lf
+*.sh text eol=lf
+*.html text eol=lf
+*.md text eol=lf
