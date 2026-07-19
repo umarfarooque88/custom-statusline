@@ -1,5 +1,5 @@
 ---
-name: customize-status-line
+name: custom-statusline
 description: Use when the user wants to choose, change, restyle, or set up their Claude Code status line — e.g. "customize my status line", "change statusline design", "pick a statusline style", "make my status bar look better", or after they mention a design number from the status line gallery.
 ---
 
@@ -119,9 +119,9 @@ falls back to flat blocks with colors intact.
 
 ## Changing designs later
 
-The user runs `/customize-status-line` again — same flow (gallery → number →
+The user runs `/custom-statusline` again — same flow (gallery → number →
 install → verify). Always end a successful install by teaching this:
-"Run `/customize-status-line` anytime to change your design."
+"Run `/custom-statusline` anytime to change your design."
 
 Mechanically, a switch is just editing the `DESIGN=` line in
 `~/.claude/statusline-command.sh` (or `STATUSLINE_DESIGN=<n>` in the

@@ -1,4 +1,4 @@
-# customize-status-line
+# custom-statusline
 
 **27 ready-made status line designs for Claude Code.** Pick one by number from
 a visual gallery — your status line shows your model, directory, git branch,
@@ -10,7 +10,7 @@ changed, styled the way you like it.
 1. **Tell Claude Code:**
 
    ```
-   clone https://github.com/umarfarooque88/customize-status-line
+   clone https://github.com/umarfarooque88/custom-statusline
    ```
 
    Claude places the skill where it belongs (`~/.claude/skills/`) and tells you
@@ -19,7 +19,7 @@ changed, styled the way you like it.
 2. **Run:**
 
    ```
-   /customize-status-line
+   /custom-statusline
    ```
 
    The design gallery opens in your browser — 27 designs, each previewed in a
@@ -31,7 +31,7 @@ changed, styled the way you like it.
 
 ## Changing your design
 
-Run `/customize-status-line` again. Same flow — gallery opens, you reply with a
+Run `/custom-statusline` again. Same flow — gallery opens, you reply with a
 number. That's the only command to remember.
 
 ## What you'll see
@@ -64,8 +64,8 @@ isn't available):
 
 ```bash
 mkdir -p ~/.claude/skills
-git clone https://github.com/umarfarooque88/customize-status-line ~/.claude/skills/customize-status-line
-cp ~/.claude/skills/customize-status-line/statusline.sh ~/.claude/statusline-command.sh
+git clone https://github.com/umarfarooque88/custom-statusline ~/.claude/skills/custom-statusline
+cp ~/.claude/skills/custom-statusline/statusline.sh ~/.claude/statusline-command.sh
 # edit the DESIGN= line near the top of the copied file, pick 1-27
 ```
 
@@ -79,7 +79,7 @@ Then merge into `~/.claude/settings.json` (create the file as `{}` if missing):
 
 | File | Purpose |
 |------|---------|
-| `SKILL.md` | The skill Claude follows when you run `/customize-status-line` |
+| `SKILL.md` | The skill Claude follows when you run `/custom-statusline` |
 | `statusline.sh` | The engine — all 27 designs in one script |
 | `gallery.html` | The visual catalog (opens locally, no sign-in needed) |
 | `CLAUDE.md` | Setup instructions Claude follows when you say "clone this repo" |

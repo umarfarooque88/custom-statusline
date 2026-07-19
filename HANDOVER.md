@@ -1,4 +1,4 @@
-# HANDOVER — customize-status-line
+# HANDOVER — custom-statusline
 
 Context handover for continuing work in this folder (previous session ran from
 `D:\game`). Read this first; everything below is current as of 2026-07-19.
@@ -7,9 +7,9 @@ Context handover for continuing work in this folder (previous session ran from
 
 A Claude Code skill: **27 status line designs, selectable by number**. User
 says `clone <repo-URL>` → Claude installs the skill → user runs
-`/customize-status-line` → gallery.html opens in browser → user replies with a
+`/custom-statusline` → gallery.html opens in browser → user replies with a
 number → engine installed, statusLine auto-enabled in settings.json, verified.
-Changing designs later = run `/customize-status-line` again. That command is
+Changing designs later = run `/custom-statusline` again. That command is
 deliberately taught in README, gallery banner + all 27 card chips, and the
 skill's success message.
 
@@ -18,16 +18,16 @@ skill's success message.
 | File | Role |
 |---|---|
 | `statusline.sh` | Engine. All 27 designs as node-rendered ANSI; `DESIGN="${STATUSLINE_DESIGN:-N}"` on line 14 picks (env var wins). Parses statusLine stdin JSON with **node, not jq** (jq missing on Windows Git Bash). Git branch via `execFileSync` (no shell — cmd.exe broke `2>/dev/null \|\|` syntax). `STATUSLINE_PLAIN=1` swaps nerd-font glyphs (arrows ``, caps ``) for flat blocks. Renders graceful-degradation: every segment hides when its data is absent. |
-| `gallery.html` | Visual catalog, 27 cards in 4 groups (Everyday / Expressive / Style studies / Game art styles), each calm + high-usage rows, font badges, per-card `/customize-status-line` command chips. Self-contained; opened as a **local file** in the browser (NOT as an artifact — artifact URLs need claude.ai sign-in). |
+| `gallery.html` | Visual catalog, 27 cards in 4 groups (Everyday / Expressive / Style studies / Game art styles), each calm + high-usage rows, font badges, per-card `/custom-statusline` command chips. Self-contained; opened as a **local file** in the browser (NOT as an artifact — artifact URLs need claude.ai sign-in). |
 | `SKILL.md` | The skill. Workflow: open gallery locally → ask number (skip if user gave one) → install (cp engine, set DESIGN, merge settings.json — create as `{}` if absent, auto-enabling statusLine) → verify with sample payload. Has full design catalog table (1–27 — note row 14 Wabi-sabi sits alone at the bottom) and common-mistakes list. |
-| `CLAUDE.md` | Instructions Claude follows when a user says "clone this repo": clone into `~/.claude/skills/customize-status-line` (mkdir -p skills; mv if cloned elsewhere), check node, then HAND OFF to `/customize-status-line` — do not install directly. |
+| `CLAUDE.md` | Instructions Claude follows when a user says "clone this repo": clone into `~/.claude/skills/custom-statusline` (mkdir -p skills; mv if cloned elsewhere), check node, then HAND OFF to `/custom-statusline` — do not install directly. |
 | `README.md` | User-facing only (2-step install, data table, requirements, manual install). No Claude instructions here — that was deliberate (user request). |
 | `.gitattributes` | Forces LF. **Critical:** CRLF checkout breaks `statusline.sh` under bash (`\r: command not found`). Verified a fresh clone has 0 CR bytes. |
 
 ## Deployment copies (keep in sync!)
 
-1. `D:\customize-status-line` — this repo, source of truth
-2. `C:\Users\UMAR FAROOQUE\.claude\skills\customize-status-line\` — installed skill (live for `/customize-status-line`)
+1. `D:\custom-statusline` — this repo, source of truth
+2. `C:\Users\UMAR FAROOQUE\.claude\skills\custom-statusline\` — installed skill (live for `/custom-statusline`)
 3. `C:\Users\UMAR FAROOQUE\.claude\statusline-command.sh` — the user's LIVE status line: engine copy with **DESIGN=2 (Nightshade)** currently set
 4. Artifact (gallery mirror): https://claude.ai/code/artifact/922ff4f0-5d67-4793-ad4a-55f5f04ddf90 — legacy/preview; local file is the canonical UX
 
@@ -86,7 +86,7 @@ the cost/time/lines tail. Bar-style designs must print the % beside bars.
    with the real URL (they are intentionally placeholders now).
 2. Consider GitHub Pages for gallery.html (browse designs before installing).
 3. Optional ideas parked (user rejected auto-installer flows — do NOT add
-   curl|bash / install.sh without asking): arg grammar (`/customize-status-line 14`
+   curl|bash / install.sh without asking): arg grammar (`/custom-statusline 14`
    direct-switch works via SKILL.md "skip straight to install"; `random`,
    `current`, `doctor` were proposed, not built).
 4. `statusline.sh` line 3 has an empty `https://github.com/` comment — fill

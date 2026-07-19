@@ -13,7 +13,7 @@ file explains the history, the user, and the decisions — read both.
   concrete action. Pushed back hard exactly twice — remember why:
   1. Rejected an elaborate installer/UX-flow proposal (curl|bash, install.sh,
      arg grammars) as over-engineering: "no fuck no stop that". The flow must
-     stay: clone → /customize-status-line → number. Nothing more.
+     stay: clone → /custom-statusline → number. Nothing more.
   2. Insisted README.md be user-facing only; Claude-directed instructions were
      moved to CLAUDE.md.
 
@@ -39,7 +39,7 @@ file explains the history, the user, and the decisions — read both.
    Now EVERY design renders the complete data set (enforced by tailTxt()/tl()
    helpers + token-matrix tests). This is a user-stated invariant.
 7. Flow finalized: CLAUDE.md drives the clone step; SKILL.md drives
-   gallery→number→install→verify; /customize-status-line is taught in README,
+   gallery→number→install→verify; /custom-statusline is taught in README,
    gallery banner, all 27 card chips, and the install success message.
 8. Repo initialized (main, 6+ commits). No remote yet.
 

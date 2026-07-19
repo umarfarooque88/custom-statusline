@@ -104,13 +104,13 @@
     <p class="kick">statusLine · gallery</p>
     <h1>Twenty-seven directions. Pick one.</h1>
     <p class="intro">Each is a different structural take on the same data — real color, live example values. Every card shows a calm and a high-usage state so you can see the meters warn. <b>Badges:</b> <span style="color:#4f7a3f">font-safe</span> works anywhere; <span style="color:#a8722a">powerline / emoji</span> need glyphs your terminal already renders.</p>
-    <div class="howto">🎨 <span>Found one you like? Go back to Claude Code and reply with its <b>number</b>.</span> <span>To change your design anytime later, run</span> <code>/customize-status-line</code> <span>— same flow, forever.</span></div>
+    <div class="howto">🎨 <span>Found one you like? Go back to Claude Code and reply with its <b>number</b>.</span> <span>To change your design anytime later, run</span> <code>/custom-statusline</code> <span>— same flow, forever.</span></div>
   </header>
 
   <div id="cards"></div>
 
   <div class="foot">
-    <b>How this works:</b> reply with a number in Claude Code and the design goes live at your next prompt. The one command to remember: <code style="font-family:ui-monospace,Consolas,monospace;color:var(--accent);font-weight:700">/customize-status-line</code> — it reopens this gallery and switches your design, anytime, on any machine with this skill installed. Want a tweak to a design first? Just describe it — e.g. "3, but keep the cost segment."
+    <b>How this works:</b> reply with a number in Claude Code and the design goes live at your next prompt. The one command to remember: <code style="font-family:ui-monospace,Consolas,monospace;color:var(--accent);font-weight:700">/custom-statusline</code> — it reopens this gallery and switches your design, anytime, on any machine with this skill installed. Want a tweak to a design first? Just describe it — e.g. "3, but keep the cost segment."
   </div>
 </div>
 
@@ -662,7 +662,7 @@ document.getElementById('cards').innerHTML = DESIGNS.map((d,i)=>{
       <div class="row"><span class="tag">calm</span><span class="bar${cls}">${d.fn(CALM)}</span></div>
       <div class="row"><span class="tag hot">high use</span><span class="bar hot${cls}">${d.fn(HOT)}</span></div>
     </div>
-    <div class="cardcmd">want this one? reply <code>${i+1}</code> in Claude Code &nbsp;·&nbsp; or later: <code>/customize-status-line</code> → ${i+1}</div>
+    <div class="cardcmd">want this one? reply <code>${i+1}</code> in Claude Code &nbsp;·&nbsp; or later: <code>/custom-statusline</code> → ${i+1}</div>
   </div>`;
 }).join('');
 </script>
