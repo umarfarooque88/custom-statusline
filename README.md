@@ -6,6 +6,8 @@ context usage, session & weekly rate limits (with a countdown to when the
 5-hour window resets), cost, active time, and lines changed, styled the way you
 like it.
 
+**▶ [Browse all 27 designs online](https://umarfarooque88.github.io/custom-statusline/)** — previews are rendered from the real engine output, no install needed.
+
 ## Install (2 steps)
 
 1. **Tell Claude Code:**
