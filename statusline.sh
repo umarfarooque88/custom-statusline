@@ -1,6 +1,6 @@
 #!/bin/sh
 # customize-status-line engine — 27 selectable designs for the Claude Code statusLine.
-# https://github.com/  (part of the customize-status-line skill project)
+# https://github.com/umarfarooque88/customize-status-line  (part of the customize-status-line skill project)
 #
 # Design is picked by number (1-27), see gallery.html or SKILL.md for the catalog.
 # Install: copy this file to ~/.claude/statusline-command.sh, set DESIGN below,

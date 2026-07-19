@@ -10,7 +10,7 @@ changed, styled the way you like it.
 1. **Tell Claude Code:**
 
    ```
-   clone <this-repo-URL>
+   clone https://github.com/umarfarooque88/customize-status-line
    ```
 
    Claude places the skill where it belongs (`~/.claude/skills/`) and tells you
@@ -64,7 +64,7 @@ isn't available):
 
 ```bash
 mkdir -p ~/.claude/skills
-git clone <repo-URL> ~/.claude/skills/customize-status-line
+git clone https://github.com/umarfarooque88/customize-status-line ~/.claude/skills/customize-status-line
 cp ~/.claude/skills/customize-status-line/statusline.sh ~/.claude/statusline-command.sh
 # edit the DESIGN= line near the top of the copied file, pick 1-27
 ```

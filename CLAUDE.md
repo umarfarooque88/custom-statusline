@@ -8,7 +8,7 @@ after the clone.
 
    ```bash
    mkdir -p ~/.claude/skills
-   git clone <repo-URL> ~/.claude/skills/customize-status-line
+   git clone https://github.com/umarfarooque88/customize-status-line ~/.claude/skills/customize-status-line
    ```
 
    Already exists with a `.git`? `git -C ~/.claude/skills/customize-status-line pull --ff-only` instead.
