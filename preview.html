@@ -52,19 +52,17 @@
   .list::-webkit-scrollbar-thumb{ background:var(--faint); border-radius:9px; border:2px solid var(--void); }
   .grp{ font-family:var(--mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase;
     color:var(--mut); padding:14px 10px 6px; }
-  .row{ display:grid; grid-template-columns:30px 1fr auto; align-items:center; gap:10px;
-    width:100%; text-align:left; background:transparent; border:1px solid transparent; border-radius:9px;
-    padding:8px 10px; cursor:pointer; color:inherit; font:inherit; }
+  .row{ display:grid; grid-template-columns:26px 1fr auto; align-items:center; gap:11px;
+    width:100%; text-align:left; background:transparent; border:1px solid transparent; border-radius:8px;
+    padding:9px 11px; cursor:pointer; color:inherit; font:inherit; }
   .row:hover{ background:var(--panel); }
   .row[aria-selected="true"]{ background:var(--panel2); border-color:var(--faint); }
   .row[aria-selected="true"] .rnum{ color:var(--accent); }
-  .rnum{ font-family:var(--mono); font-size:16px; font-weight:600; color:var(--mut);
+  .row[aria-selected="true"] .rname{ color:var(--ink); }
+  .rnum{ font-family:var(--mono); font-size:14px; font-weight:600; color:var(--mut);
     font-variant-numeric:tabular-nums; text-align:right; transition:color .2s; }
-  .rmid{ min-width:0; }
-  .rname{ font-size:13.5px; font-weight:550; letter-spacing:-.01em; white-space:nowrap;
-    overflow:hidden; text-overflow:ellipsis; }
-  .rmini{ margin-top:3px; height:1.2em; overflow:hidden;
-    -webkit-mask-image:linear-gradient(90deg,#000 72%,transparent); mask-image:linear-gradient(90deg,#000 72%,transparent); opacity:.85; }
+  .rname{ font-size:13.5px; font-weight:500; letter-spacing:-.01em; color:var(--dim);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .rbadge{ font-family:var(--mono); font-size:9px; letter-spacing:.06em; text-transform:uppercase;
     color:var(--mut); border:1px solid var(--rule); border-radius:5px; padding:3px 5px; white-space:nowrap; }
   .rbadge.safe{ color:#7fae6b; border-color:#33502a; }
@@ -143,7 +141,7 @@
     <p class="eyebrow">Claude Code · statusLine</p>
     <h1>Pick a status line <b>·</b> 27 designs</h1>
   </div>
-  <p class="lede">Every preview is the <b style="color:var(--ink);font-weight:600">real engine output</b>, not a mockup. Pilot the list with your keyboard — arrows, or just type a number. Reply with that number in Claude Code, or run <code>/custom-statusline</code> to change anytime.</p>
+  <p class="lede">Real engine output, not mockups. Arrow-key the list or type a number, then reply with it in Claude Code — or run <code>/custom-statusline</code> anytime.</p>
 </header>
 
 <div class="app">
@@ -340,17 +338,23 @@ const PREVIEWS = {
 };
 // PREVIEWS:END
 
-// derive each design's signal hue from the most-saturated color in its hot preview
+// derive each design's identity hue from its CALM preview (the model tag / brand
+// colors), not the hot state — otherwise every accent becomes the alarm red.
+// Prefer the earliest reasonably-saturated color, which is the identity segment.
 function accentOf(n){
-  const html=(PREVIEWS[n]&&PREVIEWS[n].hot)||'';
+  const html=(PREVIEWS[n]&&PREVIEWS[n].calm)||'';
   const cols=[...html.matchAll(/rgb\((\d+),(\d+),(\d+)\)/g)].map(m=>[+m[1],+m[2],+m[3]]);
-  let best=null, bestS=-1;
+  for(const [r,g,b] of cols){                       // first identity-strength color wins
+    const mx=Math.max(r,g,b), mn=Math.min(r,g,b);
+    const sat=mx===0?0:(mx-mn)/mx, lum=mx/255;       // no upper lum cap: bright pastels
+    if(sat>=.33 && lum>=.42) return `rgb(${r},${g},${b})`;  // (lavender, purple) are wanted
+  }
+  let best=null, bestS=-1;                           // fallback: most saturated legible
   for(const [r,g,b] of cols){
     const mx=Math.max(r,g,b), mn=Math.min(r,g,b);
     const sat=mx===0?0:(mx-mn)/mx, lum=mx/255;
-    if(lum<.3||lum>.98) continue;
-    const score=sat*Math.min(1,lum*1.4);
-    if(score>bestS){ bestS=score; best=[r,g,b]; }
+    if(lum<.4) continue;
+    if(sat>bestS){ bestS=sat; best=[r,g,b]; }
   }
   return best?`rgb(${best[0]},${best[1]},${best[2]})`:'#e2896a';
 }
@@ -386,10 +390,9 @@ function renderList(){
   for(const i of vis){
     const d=CARDS[i];
     if(d.group!==lastGroup && state.group==='All'){ html+=`<div class="grp">${d.group}</div>`; lastGroup=d.group; }
-    const mini=(PREVIEWS[i+1]&&PREVIEWS[i+1].calm)||'';
     html+=`<button class="row" role="option" data-i="${i}" aria-selected="${i===state.sel}">
       <span class="rnum">${i+1}</span>
-      <span class="rmid"><span class="rname">${d.name}</span><span class="rmini sl sm">${mini}</span></span>
+      <span class="rname">${d.name}</span>
       <span class="rbadge ${d.badge[1]}">${d.badge[0]}</span>
     </button>`;
   }
