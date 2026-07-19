@@ -80,7 +80,7 @@ const flow = (segs, tailBg) => {          // flush arrows (Kiln)
   return out + R;
 };
 const pills = (list, capify) => list.map((p) =>
-  (capify ? fg(p.bg) + CL : "") + bg(p.bg) + p.inner + R + (capify ? fg(p.bg) + CR : "")
+  (capify ? fg(p.bg) + CL : "") + bg(p.bg) + " " + p.inner + " " + R + (capify ? fg(p.bg) + CR : "")
 ).join(" ") + R;
 const blocks = (list) => list.map((p) => bg(p.bg) + p.inner + R).join("") + R;
 
@@ -103,11 +103,12 @@ const DESIGNS = {
   const W = { coral:"#D97757", slate:"#2E2A2A", clay:"#7A5A4A", ink:"#1E1B1A", cream:"#F2EFEA",
     sage:"#8A9A5B", amber:"#E0A84A", danger:"#C94A3E", add:"#96C878", del:"#D66E64", mut:"#A89E96" };
   const mc = mk(W.sage, W.amber, W.danger);
+  const BR = plain ? "⌥" : "";
   const segs = [
     { bg: W.coral, inner: fg(W.ink) + ` ${B}◆ ${S.model}${NB} ` },
     { bg: W.slate, inner: fg(W.cream) + ` ${S.dir} ` },
-    S.branch && { bg: W.clay, inner: fg(W.cream) + ` ⌥ ${S.branch} ` },
-    has(S.ctx) && { bg: mc(S.ctx), inner: fg(W.ink) + ` ctx ${pct(S.ctx)} ` },
+    S.branch && { bg: W.clay, inner: fg(W.cream) + ` ${BR} ${S.branch} ` },
+    has(S.ctx) && { bg: mc(S.ctx), inner: fg(W.ink) + ` ctx ${B}${pct(S.ctx)}${NB} ` },
     (has(S.h5) || has(S.d7)) && { bg: W.slate, inner: " " +
       [has(S.h5) && c(W.mut,"5h ") + c(mc(S.h5), pct(S.h5)), has(S.d7) && c(W.mut,"7d ") + c(mc(S.d7), pct(S.d7))]
       .filter(Boolean).join(c(W.mut," · ")) + " " },
@@ -126,8 +127,8 @@ const DESIGNS = {
   const L = [
     { bg: K.lav, inner: fg(K.ink) + B + `◆ ${S.model}` + NB },
     { bg: K.dir, inner: fg(K.dirfg) + S.dir },
-    S.branch && { bg: K.br, inner: fg(K.lav) + `⎇ ${S.branch}` },
-    has(S.ctx) && { bg: K.tail, inner: c(K.mut, "ctx ") + c(mc(S.ctx), pct(S.ctx)) },
+    S.branch && { bg: K.br, inner: fg(K.lav) + `${plain ? "⎇" : ""} ${S.branch}` },
+    has(S.ctx) && { bg: K.tail, inner: c(mc(S.ctx), "ctx ") + (S.ctx >= 80 ? B + pct(S.ctx) + NB : pct(S.ctx)) },
     (has(S.h5) || has(S.d7)) && { bg: K.tail, inner:
       [has(S.h5) && c(K.mut,"5h ") + c(mc(S.h5), pct(S.h5)), has(S.d7) && c(K.mut,"7d ") + c(mc(S.d7), pct(S.d7))]
       .filter(Boolean).join("  ") },
@@ -141,13 +142,14 @@ const DESIGNS = {
 3: () => { // Hairline — colored text + thin rules (font-safe)
   const W = { coral:"#D97757", mut:"#A89E96", sage:"#8A9A5B", amber:"#E0A84A", danger:"#C94A3E" };
   const mc = mk(W.sage, W.amber, W.danger);
-  const div = c("#5a534c", "│");
+  const div = c("#4a433d", "│");
+  const hotB = (p, t) => p >= 80 ? B + t + NB : t;
   return [
     B + c(W.coral, "◆ " + S.model) + NB,
     c("#dcd6cc", S.dir),
-    S.branch && c("#c69a54", "⌥ " + S.branch),
-    has(S.ctx) && c(mc(S.ctx), "ctx " + pct(S.ctx)),
-    (has(S.h5) || has(S.d7)) && [has(S.h5) && c(W.mut,"5h ")+c(mc(S.h5),pct(S.h5)), has(S.d7) && c(W.mut,"7d ")+c(mc(S.d7),pct(S.d7))].filter(Boolean).join(c("#6a625a"," · ")),
+    S.branch && c("#c69a54", "▸ " + S.branch),
+    has(S.ctx) && c(mc(S.ctx), "ctx " + hotB(S.ctx, pct(S.ctx))),
+    (has(S.h5) || has(S.d7)) && [has(S.h5) && c(W.mut,"5h ")+c(mc(S.h5), hotB(S.h5, pct(S.h5))), has(S.d7) && c(W.mut,"7d ")+c(mc(S.d7), hotB(S.d7, pct(S.d7)))].filter(Boolean).join(c("#6a625a"," · ")),
     (costS||durS||hasLines) && c("#7c736a", [costS,durS].filter(Boolean).join("  ") + (hasLines?`  +${S.add||0} -${S.del||0}`:"")),
   ].filter(Boolean).join(`  ${div}  `) + R;
 },
@@ -156,14 +158,23 @@ const DESIGNS = {
   const W = { coral:"#D97757", cream:"#F2EFEA", clay:"#7A5A4A", mut:"#A89E96",
     sage:"#8A9A5B", amber:"#E0A84A", danger:"#C94A3E", track:"#3a342e" };
   const mc = mk(W.sage, W.amber, W.danger);
-  const bar = (p, cells) => { const f = p<=0?0:Math.max(1,Math.round(p/100*cells));
-    return c("#5b544c","▕") + c(mc(p), "█".repeat(f)) + c(W.track, "█".repeat(cells-f)) + c("#5b544c","▏"); };
+  const bar = (p, cells) => {
+    const e = p<=0 ? 0 : Math.min(cells*8, Math.max(1, Math.round(p/100*cells*8)));
+    const full = Math.floor(e/8), rem = e%8, PART = " ▏▎▍▌▋▊▉";
+    let out = c("#5b544c","▕");
+    if (full) out += c(mc(p), "█".repeat(full));
+    if (rem) out += bg(W.track) + c(mc(p), PART[rem]) + "\x1b[49m";
+    const empty = cells - full - (rem ? 1 : 0);
+    if (empty) out += c(W.track, "█".repeat(empty));
+    return out + c("#5b544c","▏");
+  };
+  const pv = (p) => p>=80 ? B + c(mc(p), pct(p)) + NB : c(mc(p), pct(p));
   return [
-    B + c(W.coral, "◆ " + S.model) + NB + " " + c(W.cream, S.dir) + (S.branch ? " " + c(W.clay, "⌥" + S.branch) : ""),
-    has(S.ctx) && c(W.mut,"ctx ") + bar(S.ctx,8) + " " + c(mc(S.ctx), pct(S.ctx)),
-    has(S.h5) && c(W.mut,"5h ") + bar(S.h5,4) + " " + c(mc(S.h5), pct(S.h5)),
-    has(S.d7) && c(W.mut,"7d ") + bar(S.d7,4) + " " + c(mc(S.d7), pct(S.d7)),
-    tailTxt("#7c736a", W.sage, W.danger),
+    B + c(W.coral, "◆ " + S.model) + NB + " " + c(W.cream, S.dir) + (S.branch ? " " + c(W.clay, "▸" + S.branch) : ""),
+    has(S.ctx) && c(W.mut,"ctx ") + bar(S.ctx,8) + " " + pv(S.ctx),
+    has(S.h5) && c(W.mut,"5h ") + bar(S.h5,4) + " " + pv(S.h5),
+    has(S.d7) && c(W.mut,"7d ") + bar(S.d7,4) + " " + pv(S.d7),
+    tailTxt("#7c736a", "#96C878", "#D66E64", "  "),
   ].filter(Boolean).join("   ") + R;
 },
 
@@ -174,8 +185,8 @@ const DESIGNS = {
   const L = [
     { bg: W.coral, inner: fg(W.ink) + ` ${B}◆ ${S.model}${NB} ` },
     { bg: "#403a34", inner: fg(W.cream) + ` ${S.dir} ` },
-    S.branch && { bg: W.clay, inner: fg(W.cream) + ` ⌥ ${S.branch} ` },
-    has(S.ctx) && { bg: mc(S.ctx), inner: fg(W.ink) + ` ctx ${pct(S.ctx)} ` },
+    S.branch && { bg: W.clay, inner: fg(W.cream) + ` ▸ ${S.branch} ` },
+    has(S.ctx) && { bg: mc(S.ctx), inner: fg(W.ink) + ` ctx ${S.ctx >= 80 ? B + pct(S.ctx) + NB : pct(S.ctx)} ` },
     (has(S.h5)||has(S.d7)) && { bg:"#2a2622", inner: " " + [has(S.h5)&&c(W.mut,"5h ")+c(mc(S.h5),pct(S.h5)), has(S.d7)&&c(W.mut,"7d ")+c(mc(S.d7),pct(S.d7))].filter(Boolean).join(" ") + " " },
     (costS||durS||hasLines) && { bg: W.ink, inner: fg(W.mut) + " " + [costS,durS].filter(Boolean).join(" ") +
       (hasLines ? " " + c(W.add,`+${S.add||0}`) + " " + c(W.del,`-${S.del||0}`) : "") + " " },
@@ -190,7 +201,7 @@ const DESIGNS = {
   const L = [
     { bg: K.terra, inner: fg(K.ink) + B + `◆ ${S.model}` + NB },
     { bg: K.sand, inner: fg(K.ink) + S.dir },
-    S.branch && { bg: K.brown, inner: fg(K.cream) + `⌥ ${S.branch}` },
+    S.branch && { bg: K.brown, inner: fg(K.cream) + `${plain ? "⌥" : ""} ${S.branch}` },
     has(S.ctx) && { bg: mc(S.ctx), inner: fg(K.ink) + `ctx ${pct(S.ctx)}` },
     (has(S.h5)||has(S.d7)) && { bg: K.sand, inner: [has(S.h5)&&c(K.mut,"5h ")+c(mc(S.h5),pct(S.h5)), has(S.d7)&&c(K.mut,"7d ")+c(mc(S.d7),pct(S.d7))].filter(Boolean).join("  ") },
     (costS||durS||hasLines) && { bg: K.brown, inner: tailTxt(K.cream, "#D8E8C0", "#F8D0C0", " · ") },
@@ -201,152 +212,204 @@ const DESIGNS = {
 7: () => { // Arcade HUD — health/energy bars + emoji (emoji glyphs)
   const W = { cream:"#F2EFEA", mut:"#A89E96", sage:"#8A9A5B", amber:"#E0A84A", danger:"#C94A3E", track:"#3a342e" };
   const mc = mk(W.sage, W.amber, W.danger);
+  const G = plain ? { star:"*", dir:">", br:"br ", hp:"HP", en:"EN", gem:"", fill:"#", trk:"-" }
+                  : { star:"★", dir:"▸", br:"⑂ ", hp:"❤", en:"⚡", gem:"◈ ", fill:"▰", trk:"▱" };
+  const pv = (p) => p >= 80 ? B + c(mc(p), pct(p)) + NB : c(mc(p), pct(p));
   const xp = (p, cells) => { const f = p<=0?0:Math.max(1,Math.round(p/100*cells));
-    return c(mc(p), "▰".repeat(f)) + c(W.track, "▱".repeat(cells-f)); };
+    return c(mc(p), G.fill.repeat(f)) + c(W.track, G.trk.repeat(cells-f)); };
   return [
-    c("#F0C36A","★") + " " + B + c(W.cream, S.model) + NB,
-    c("#8fb0d6","▸") + " " + c(W.cream, S.dir),
-    S.branch && c("#c69a54", "⑂ " + S.branch),
-    has(S.ctx) && c(mc(S.ctx),"❤") + " " + xp(S.ctx,6) + " " + c(mc(S.ctx), pct(S.ctx)),
-    (has(S.h5)||has(S.d7)) && c("#F0C36A","⚡") + " " + [has(S.h5)&&"5h "+xp(S.h5,4)+" "+c(mc(S.h5),pct(S.h5)), has(S.d7)&&"7d "+xp(S.d7,4)+" "+c(mc(S.d7),pct(S.d7))].filter(Boolean).join("  "),
-    (costS||durS||hasLines) && c("#E7C15A","◈ ") + tailTxt(W.mut, W.sage, W.danger),
+    c("#F0C36A",G.star) + " " + B + c(W.cream, S.model) + NB,
+    c("#8fb0d6",G.dir) + " " + c(W.cream, S.dir),
+    S.branch && c("#c69a54", G.br + S.branch),
+    has(S.ctx) && c(mc(S.ctx),G.hp) + " " + xp(S.ctx,6) + " " + pv(S.ctx),
+    (has(S.h5)||has(S.d7)) && c("#F0C36A",G.en) + " " + [has(S.h5)&&c(W.mut,"5h ")+xp(S.h5,4)+" "+pv(S.h5), has(S.d7)&&c(W.mut,"7d ")+xp(S.d7,4)+" "+pv(S.d7)].filter(Boolean).join("  "),
+    (costS||durS||hasLines) && c("#E7C15A",G.gem) + tailTxt(W.mut, "#96C878", "#D66E64"),
   ].filter(Boolean).join("   ") + R;
 },
 
 8: () => { // Gradient Sweep — per-character color flow (font-safe)
   const stops = ["#D97757","#E0A84A","#8A9A5B","#5AB0C0","#9B7BE0"].map(hx);
-  const parts = [`◆ ${S.model}`, S.dir, S.branch, has(S.ctx)&&`ctx ${pct(S.ctx)}`,
-    (has(S.h5)||has(S.d7)) && [has(S.h5)&&`5h ${pct(S.h5)}`, has(S.d7)&&`7d ${pct(S.d7)}`].filter(Boolean).join(" · "),
-    (costS||durS||hasLines)&&[costS,durS,hasLines?("+"+(S.add||0)+" -"+(S.del||0)):null].filter(Boolean).join(" ")].filter(Boolean);
-  const str = parts.join("  ›  ");
+  const modelTok = `◆ ${S.model}`;
+  const ctxTok = has(S.ctx) ? `ctx ${pct(S.ctx)}` : null;
+  const h5Tok  = has(S.h5)  ? `5h ${pct(S.h5)}`  : null;
+  const d7Tok  = has(S.d7)  ? `7d ${pct(S.d7)}`  : null;
+  const usageTok = (h5Tok || d7Tok) ? [h5Tok, d7Tok].filter(Boolean).join(" · ") : null;
+  const d7Off = h5Tok ? h5Tok.length + 3 : 0;
+  const rawParts = [
+    { txt: modelTok },
+    { txt: S.dir },
+    S.branch && { txt: S.branch },
+    ctxTok && { txt: ctxTok, p: [[0, ctxTok.length, S.ctx]] },
+    usageTok && { txt: usageTok, p: [ h5Tok && [0, h5Tok.length, S.h5], d7Tok && [d7Off, d7Off + d7Tok.length, S.d7] ].filter(Boolean) },
+    (costS||durS||hasLines) && { txt: [costS,durS,hasLines?("+"+(S.add||0)+" -"+(S.del||0)):null].filter(Boolean).join(" ") },
+  ].filter(Boolean);
+  const str = rawParts.map((p2) => p2.txt).join("  ›  ");
+  const hot = [];
+  let off = 0;
+  rawParts.forEach((p2) => {
+    (p2.p || []).forEach(([s3, e3, v]) => { if (v >= 50) hot.push([off + s3, off + e3, v]); });
+    off += p2.txt.length + 5;
+  });
+  const WARM_BG = "\x1b[48;2;58;43;16m";
+  const CRIT_BG = "\x1b[48;2;69;23;17m";
   const chars = [...str], n = chars.length;
-  return chars.map((ch, i) => {
-    if (ch === " ") return " ";
+  let cur = null, out = B;
+  chars.forEach((ch, i) => {
+    if (i === modelTok.length) out += NB;
+    const nxt = hot.find((h3) => i >= h3[0] && i < h3[1]) || null;
+    if (nxt !== cur) {
+      if (cur && cur[2] >= 80) out += NB;
+      if (nxt) out += (nxt[2] >= 80 ? CRIT_BG + B : WARM_BG);
+      else out += "\x1b[49m";
+      cur = nxt;
+    }
+    if (ch === " ") { out += " "; return; }
     const t = n <= 1 ? 0 : i / (n - 1), seg = t * (stops.length - 1),
       k = Math.min(stops.length - 2, Math.floor(seg)), f2 = seg - k, a = stops[k], b2 = stops[k + 1];
     const L2 = (x, y) => Math.round(x + (y - x) * f2);
-    return `\x1b[38;2;${L2(a[0],b2[0])};${L2(a[1],b2[1])};${L2(a[2],b2[2])}m${ch}`;
-  }).join("") + R;
+    out += `\x1b[38;2;${L2(a[0],b2[0])};${L2(a[1],b2[1])};${L2(a[2],b2[2])}m${ch}`;
+  });
+  return out + R;
 },
 
 9: () => { // Synthwave — neon on near-black (font-safe)
   const N = { cyan:"#3df0e6", mag:"#ff5fd2", pur:"#b48bff", dim:"#5a6a8a", warn:"#ffd166", crit:"#ff4d6d" };
   const mc = mk(N.cyan, N.warn, N.crit);
+  const sign = (t) => B + bg(N.crit) + fg("#0a0a16") + " " + t + " " + R;
   return [
     B + c(N.cyan, "◆ " + S.model) + NB,
     c(N.pur, S.dir),
-    S.branch && c(N.mag, "⌥ " + S.branch),
-    has(S.ctx) && c(mc(S.ctx), "ctx " + pct(S.ctx)),
-    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(N.dim,"5h ")+c(mc(S.h5),pct(S.h5)), has(S.d7)&&c(N.dim,"7d ")+c(mc(S.d7),pct(S.d7))].filter(Boolean).join(c(N.dim," · ")),
-    tailTxt(N.dim, N.cyan, N.crit),
+    S.branch && c(N.mag, S.branch),
+    has(S.ctx) && (S.ctx >= 80 ? sign("ctx " + pct(S.ctx)) : c(mc(S.ctx), "ctx " + pct(S.ctx))),
+    (has(S.h5)||has(S.d7)) && [has(S.h5) && c(N.dim,"5h ") + (S.h5 >= 80 ? sign(pct(S.h5)) : c(mc(S.h5), pct(S.h5))), has(S.d7) && c(N.dim,"7d ") + (S.d7 >= 80 ? sign(pct(S.d7)) : c(mc(S.d7), pct(S.d7)))].filter(Boolean).join(c(N.dim," · ")),
+    tailTxt(N.dim, N.cyan, N.crit, "  "),
   ].filter(Boolean).join("  " + c(N.mag, "▸") + "  ") + R;
 },
 
 10: () => { // Phosphor LCD — amber mono (font-safe)
   const amb="#FFB000", dim="#8a5f12", hi2="#FFD36B";
+  const tier = mk(amb, hi2, "#FF7A45");
   const bar = (p) => { const cells=5, f=p<=0?0:Math.max(1,Math.round(p/100*cells));
-    return c(p>=80?"#FF7A45":amb, "▮".repeat(f)) + c("#3a2a08", "▮".repeat(cells-f)); };
-  return [
+    return (f?c(tier(p), "▮".repeat(f)):"") + (f<cells?c("#3a2a08", "▮".repeat(cells-f)):""); };
+  const pv = (p) => (p>=80?B:"") + c(tier(p), pct(p)) + (p>=80?NB:"");
+  return bg("#140E04") + [
     B + c(hi2, S.model) + NB,
     c(amb, S.dir.toUpperCase()),
     S.branch && c(amb, S.branch.toUpperCase()),
-    has(S.ctx) && c(dim,"CTX ") + bar(S.ctx) + " " + c(amb, pct(S.ctx)),
-    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(dim,"5H ")+bar(S.h5)+" "+c(amb,pct(S.h5)), has(S.d7)&&c(dim,"7D ")+bar(S.d7)+" "+c(amb,pct(S.d7))].filter(Boolean).join(" "),
-    tailTxt(dim, amb, "#FF7A45"),
+    has(S.ctx) && c(dim,"CTX ") + bar(S.ctx) + " " + pv(S.ctx),
+    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(dim,"5H ")+bar(S.h5)+" "+pv(S.h5), has(S.d7)&&c(dim,"7D ")+bar(S.d7)+" "+pv(S.d7)].filter(Boolean).join(" "),
+    tailTxt(dim, S.add?amb:dim, S.del?"#FF7A45":dim),
   ].filter(Boolean).join("  " + c("#6a4a10","//") + "  ") + R;
 },
 
 11: () => { // Brutalist — raw caps, red alarm (font-safe)
   const red="#FF3B1F", wh="#E8E4DC", gr="#6E6A62";
-  const alert = (has(S.ctx)&&S.ctx>=80)||(has(S.d7)&&S.d7>=80);
+  const alert = (has(S.ctx)&&S.ctx>=80)||(has(S.h5)&&S.h5>=80)||(has(S.d7)&&S.d7>=80);
+  const met = (t,p) => p>=80 ? B + c(red,t) + NB : p>=50 ? c(wh,t) : c(gr,t);
   return [
     B + c(alert?red:wh, "[" + S.model.toUpperCase() + "]") + NB,
     c(wh, S.dir.toUpperCase()),
     S.branch && c(gr, "/" + S.branch.toUpperCase()),
-    has(S.ctx) && c(alert?red:wh, "CTX_" + Math.round(S.ctx)),
-    (has(S.h5)||has(S.d7)) && c(gr, [has(S.h5)&&"5H_"+Math.round(S.h5), has(S.d7)&&"7D_"+Math.round(S.d7)].filter(Boolean).join(" ")),
+    has(S.ctx) && (S.ctx>=80 ? B + c(red, "CTX_"+Math.round(S.ctx)) + NB : S.ctx>=50 ? B + c(wh, "CTX_"+Math.round(S.ctx)) + NB : c(gr, "CTX_"+Math.round(S.ctx))),
+    (has(S.h5)||has(S.d7)) && [has(S.h5)&&met("5H_"+Math.round(S.h5),S.h5), has(S.d7)&&met("7D_"+Math.round(S.d7),S.d7)].filter(Boolean).join(" "),
     (costS||durS||hasLines) && c(gr, [costS,durS].filter(Boolean).join(" ") + (hasLines?" +"+(S.add||0)+"/-"+(S.del||0):"")),
-    alert ? B + c(red, "!! LIMIT") + NB : c(gr, "OK"),
+    alert ? bg(red) + fg("#1A1917") + B + " !! LIMIT " + R : c(gr, "OK"),
   ].filter(Boolean).join(" ") + R;
 },
 
 12: () => { // Bauhaus — geometry encodes state (font-safe)
   const red="#D93A2B", yel="#E8B21E", blu="#2E5FA3", wh="#EDE8E0", gr="#8b857c";
-  const shape = (p) => p>=80 ? c(red,"▲") : p>=50 ? c(yel,"■") : c(blu,"●");
-  return [
-    c(red,"●")+c(yel,"■")+c(blu,"▲") + " " + B + c(wh, S.model) + NB,
+  const shape = (p) => p>=80 ? B+c(red,"▲")+NB : p>=50 ? c(yel,"■") : c(blu,"●");
+  return bg("#1E1D1B") + " " + [
+    c(blu,"●")+c(yel,"■")+c(red,"▲") + " " + B + c(wh, S.model) + NB,
     c(wh, S.dir),
     S.branch && c(yel, S.branch),
     has(S.ctx) && shape(S.ctx) + " " + c(wh, "ctx " + pct(S.ctx)),
     (has(S.h5)||has(S.d7)) && [has(S.h5)&&shape(S.h5)+" "+c(gr,"5h "+pct(S.h5)), has(S.d7)&&shape(S.d7)+" "+c(gr,"7d "+pct(S.d7))].filter(Boolean).join("  "),
-    tailTxt(gr, blu, red),
-  ].filter(Boolean).join("   ") + R;
+    tailTxt(gr, blu, red, "  "),
+  ].filter(Boolean).join("   ") + " " + R;
 },
 
 13: () => { // Swiss — grid, one red accent (font-safe)
   const red="#E30613", ink="#DEDBD4", gr="#78746c";
-  const v = (p) => c(p>=80?red:ink, String(Math.round(p)).padStart(2) + "%");
+  const v = (p) => { const t = String(Math.round(p)).padStart(3) + "%"; return p>=80 ? B + c(red, t) + NB : p>=50 ? B + c(ink, t) + NB : c(ink, t); };
   return [
     B + c(ink, S.model) + NB + c(red, "."),
     c(ink, S.dir) + (S.branch ? c(gr, " — " + S.branch) : ""),
     has(S.ctx) && c(gr,"ctx ") + v(S.ctx),
     has(S.h5) && c(gr,"5h ") + v(S.h5),
     has(S.d7) && c(gr,"7d ") + v(S.d7),
-    tailTxt(gr, ink, red),
+    tailTxt(gr, ink, gr, "  "),
   ].filter(Boolean).join("    ") + R;
 },
 
 14: () => { // Wabi-sabi — moon-phase meters (font-safe)
   const moss="#8A9B7C", stone="#A8A296", ink="#D8D2C6", mist="#6b675e", och="#C2A36B", rust="#B0705C";
   const moon = (p) => p>=80 ? c(rust,"●") : p>=50 ? c(och,"◐") : p>0 ? c(moss,"◔") : c(mist,"○");
+  const num = (v) => String(Math.round(v));
   return [
     c(moss,"◆") + " " + c(ink, S.model),
     c(stone, S.dir),
     S.branch && c(mist, S.branch),
-    has(S.ctx) && moon(S.ctx) + " " + c(mist, "ctx ") + c(stone, pct(S.ctx)),
-    (has(S.h5)||has(S.d7)) && [has(S.h5)&&moon(S.h5)+" "+c(mist,"5h ")+c(stone,pct(S.h5)), has(S.d7)&&moon(S.d7)+" "+c(mist,"7d ")+c(stone,pct(S.d7))].filter(Boolean).join("  "),
-    tailTxt(mist, moss, rust),
+    has(S.ctx) && moon(S.ctx) + " " + c(mist, "ctx ") + c(stone, num(S.ctx)),
+    (has(S.h5)||has(S.d7)) && [has(S.h5)&&moon(S.h5)+" "+c(mist,"5h ")+c(stone,num(S.h5)), has(S.d7)&&moon(S.d7)+" "+c(mist,"7d ")+c(stone,num(S.d7))].filter(Boolean).join("  "),
+    tailTxt(mist, moss, rust, "  "),
   ].filter(Boolean).join("   ") + R;
 },
 
 15: () => { // Glassmorphic — tinted capsules (nerd-font caps)
   const wh="#EFF3FA", mut="#9FB0CC", pane="#2A3550", paneHi="#35426A";
   const mc = mk("#9BE8C8", "#FFD98E", "#FF8FA3");
+  const val = (p) => (p >= 80 ? B : "") + c(mc(p), pct(p)) + (p >= 80 ? NB : "");
   const L = [
     { bg: paneHi, inner: fg(wh) + B + `◆ ${S.model}` + NB },
     { bg: pane, inner: fg(wh) + S.dir },
-    S.branch && { bg: pane, inner: fg(mut) + `⌥ ${S.branch}` },
-    has(S.ctx) && { bg: pane, inner: c(mut,"ctx ") + c(mc(S.ctx), pct(S.ctx)) },
-    (has(S.h5)||has(S.d7)) && { bg: pane, inner: [has(S.h5)&&c(mut,"5h ")+c(mc(S.h5),pct(S.h5)), has(S.d7)&&c(mut,"7d ")+c(mc(S.d7),pct(S.d7))].filter(Boolean).join(" ") },
-    (costS||durS||hasLines) && { bg: pane, inner: tailTxt(mut, "#9BE8C8", "#FF8FA3") },
+    S.branch && { bg: pane, inner: fg(mut) + (plain ? "⌥ " : " ") + S.branch },
+    has(S.ctx) && { bg: pane, inner: c(mut,"ctx ") + val(S.ctx) },
+    (has(S.h5)||has(S.d7)) && { bg: pane, inner: [has(S.h5)&&c(mut,"5h ")+val(S.h5), has(S.d7)&&c(mut,"7d ")+val(S.d7)].filter(Boolean).join("  ") },
+    (costS||durS||hasLines) && { bg: pane, inner: tailTxt(mut, "#9BE8C8", "#FF8FA3", "  ") },
   ].filter(Boolean);
   return pills(L, true);
 },
 
-16: () => { // Memphis — 80s pop, zigzags (font-safe)
+16: () => { // Memphis — 80s pop, clashing zigzag separators (font-safe)
   const pk="#FF6FB5", te="#2EC4B6", ye="#FFD23F", pu="#9B5DE5", wh="#F5F0E8";
   const mc = mk(te, ye, pk);
-  return [
-    B + c(pk,"◆") + c(te, S.model) + NB,
-    c(ye, S.dir),
-    S.branch && c(pu, "⌥" + S.branch),
-    has(S.ctx) && c(wh,"ctx") + c(mc(S.ctx), pct(S.ctx)),
-    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(wh,"5h")+c(mc(S.h5),pct(S.h5)), has(S.d7)&&c(wh,"7d")+c(mc(S.d7),pct(S.d7))].filter(Boolean).join(" "),
-    tailTxt(wh, te, pk),
-  ].filter(Boolean).join(" " + c(pu,"▚") + " ") + R;
+  const hotP = (p) => p >= 80 ? B + c(mc(p), pct(p)) + NB : c(mc(p), pct(p));
+  const tail = tailTxt(wh, te, pk);
+  const parts = [
+    [te, B + c(pk,"◆") + c(te, S.model) + NB],
+    [ye, c(ye, S.dir)],
+    S.branch && [pu, c(pu, "▸" + S.branch)],
+    has(S.ctx) && [wh, c(wh,"ctx") + hotP(S.ctx)],
+    (has(S.h5)||has(S.d7)) && [wh, [has(S.h5)&&c(wh,"5h")+hotP(S.h5), has(S.d7)&&c(wh,"7d")+hotP(S.d7)].filter(Boolean).join(" ")],
+    tail && [wh, tail],
+  ].filter(Boolean);
+  const cyc = [pk, te, ye, pu];
+  let out = "", ci = 0;
+  parts.forEach((pr, i) => {
+    if (i) {
+      while (cyc[ci % 4] === pr[0] || cyc[ci % 4] === parts[i-1][0]) ci++;
+      out += " " + c(cyc[ci % 4], "▚▞") + " ";
+      ci++;
+    }
+    out += pr[1];
+  });
+  return out + R;
 },
 
 17: () => { // Art Deco — champagne gold (font-safe)
   const gold="#D4AF6A", hi2="#F0DCA8", gr="#8a7d5e", em="#5FA88C", ruby="#C25B5B";
   const mc = mk(em, gold, ruby);
-  return [
+  const pv = (p) => c(mc(p), (p >= 80 ? B + pct(p) + NB : pct(p)));
+  return bg("#1A1816") + " " + [
     c(gold,"❯❯") + " " + B + c(hi2, S.model.toUpperCase()) + NB + " " + c(gold,"❮❮"),
     c(hi2, S.dir),
     S.branch && c(gr, "§ " + S.branch),
-    has(S.ctx) && c(gr,"CTX ") + c(mc(S.ctx), pct(S.ctx)),
-    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(gr,"5H ")+c(mc(S.h5),pct(S.h5)), has(S.d7)&&c(gr,"7D ")+c(mc(S.d7),pct(S.d7))].filter(Boolean).join(c(gold," ∙ ")),
-    tailTxt(gr, em, ruby),
-  ].filter(Boolean).join("  " + c(gold,"━") + "  ") + R;
+    has(S.ctx) && c(gr,"CTX ") + pv(S.ctx),
+    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(gr,"5H ")+pv(S.h5), has(S.d7)&&c(gr,"7D ")+pv(S.d7)].filter(Boolean).join(c(gold," ∙ ")),
+    tailTxt(gr, em, ruby, c(gold," ∙ ") + fg(gr)),
+  ].filter(Boolean).join("  " + c(gold,"━") + "  ") + " " + R;
 },
 
 18: () => { // Nord — arctic quiet (font-safe)
@@ -355,64 +418,72 @@ const DESIGNS = {
   return [
     B + c(frost, "◆ " + S.model) + NB,
     c(snow, S.dir),
-    S.branch && c(blue, "⌥ " + S.branch),
+    S.branch && c(blue, "▸ " + S.branch),
     has(S.ctx) && c(gray,"ctx ") + c(mc(S.ctx), pct(S.ctx)),
     has(S.h5) && c(gray,"5h ") + c(mc(S.h5), pct(S.h5)),
     has(S.d7) && c(gray,"7d ") + c(mc(S.d7), pct(S.d7)),
-    tailTxt(gray, grn, red),
+    tailTxt(gray, grn, red, "  "),
   ].filter(Boolean).join("  ") + R;
 },
 
 19: () => { // Dracula — the editor theme (font-safe)
-  const pur="#BD93F9", pk="#FF79C6", grn="#50FA7B", yel="#F1FA8C", org="#FFB86C", red="#FF5555", fg2="#F8F8F2", com="#6272A4";
+  const pur="#BD93F9", pk="#FF79C6", grn="#50FA7B", yel="#F1FA8C", org="#FFB86C", red="#FF5555", fg2="#F8F8F2", com="#6272A4", bgc="#282A36";
   const mc = mk(grn, org, red);
-  return [
+  const v = (p) => p >= 80 ? B + c(mc(p), pct(p)) + NB : c(mc(p), pct(p));
+  return bg(bgc) + " " + [
     B + c(pur, "◆ " + S.model) + NB,
     c(fg2, S.dir),
-    S.branch && c(pk, "⌥ " + S.branch),
-    has(S.ctx) && c(com,"ctx ") + c(mc(S.ctx), pct(S.ctx)),
-    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(com,"5h ")+c(mc(S.h5),pct(S.h5)), has(S.d7)&&c(com,"7d ")+c(mc(S.d7),pct(S.d7))].filter(Boolean).join(" "),
+    S.branch && c(pk, "▸ " + S.branch),
+    has(S.ctx) && c(com,"ctx ") + v(S.ctx),
+    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(com,"5h ")+v(S.h5), has(S.d7)&&c(com,"7d ")+v(S.d7)].filter(Boolean).join(" "),
     tailTxt(yel, grn, red),
-  ].filter(Boolean).join(" " + c(com,"∷") + " ") + R;
+  ].filter(Boolean).join(" " + c(com,"::") + " ") + " " + R;
 },
 
 20: () => { // Terminal Rain — Matrix greens (font-safe)
   const hi2="#AAFFAA", md="#33FF66", lo="#0E8A3E", dim="#0A5C2A", warn="#CCFF33", crit="#FF6B4A";
   const mc = mk(md, warn, crit);
+  const mv = (p) => p >= 80 ? B + c(crit, pct(p)) + NB : c(mc(p), pct(p));
   return [
     B + c(hi2, "▌" + S.model + "▐") + NB,
     c(md, S.dir),
-    S.branch && c(lo, "⌥" + S.branch),
-    has(S.ctx) && c(dim,"ctx") + c(mc(S.ctx), pct(S.ctx)),
-    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(dim,"5h")+c(mc(S.h5),pct(S.h5)), has(S.d7)&&c(dim,"7d")+c(mc(S.d7),pct(S.d7))].filter(Boolean).join(" "),
-    tailTxt(dim, md, crit),
+    S.branch && c(lo, "▸" + S.branch),
+    has(S.ctx) && c(dim,"ctx") + mv(S.ctx),
+    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(dim,"5h")+mv(S.h5), has(S.d7)&&c(dim,"7d")+mv(S.d7)].filter(Boolean).join(" "),
+    (() => { const bits = [costS, durS].filter(Boolean);
+      let t = bits.length ? c(dim, bits.join(" ")) : "";
+      if (hasLines) t += (t ? " " : "") + c(S.add > 0 ? md : dim, "+" + (S.add || 0)) + " " + c(S.del > 0 ? crit : dim, "-" + (S.del || 0));
+      return t || null; })(),
   ].filter(Boolean).join(" " + c(dim,"⋮") + " ") + R;
 },
 
 21: () => { // Flat (Monument Valley) — pastel blocks (font-safe blocks)
-  const rose="#E8A0A8", teal="#7FC8C4", sandy="#F0D8B8", peach="#F2B98A", ink="#4A3D55", lav="#9B8AB8";
+  const rose="#E8A0A8", teal="#7FC8C4", sandy="#F0D8B8", peach="#F2B98A", ink="#4A3D55", lav="#9B8AB8", slate="#B8C8DC";
   const mc = mk(teal, peach, "#D97788");
   const L = [
     { bg: rose, inner: fg(ink) + ` ${B}◆ ${S.model}${NB} ` },
     { bg: sandy, inner: fg(ink) + ` ${S.dir} ` },
-    S.branch && { bg: lav, inner: fg("#F5F0FA") + ` ⌥ ${S.branch} ` },
+    S.branch && { bg: lav, inner: fg("#F5F0FA") + ` ▸ ${S.branch} ` },
     has(S.ctx) && { bg: mc(S.ctx), inner: fg(ink) + ` ctx ${pct(S.ctx)} ` },
-    (has(S.h5)||has(S.d7)) && { bg: teal, inner: fg(ink) + " " + [has(S.h5)&&"5h "+pct(S.h5), has(S.d7)&&"7d "+pct(S.d7)].filter(Boolean).join(" · ") + " " },
-    (costS||durS||hasLines) && { bg: peach, inner: fg(ink) + " " + [costS,durS,hasLines?("+"+(S.add||0)+" -"+(S.del||0)):null].filter(Boolean).join(" · ") + " " },
+    has(S.h5) && { bg: mc(S.h5), inner: fg(ink) + ` 5h ${pct(S.h5)} ` },
+    has(S.d7) && { bg: mc(S.d7), inner: fg(ink) + ` 7d ${pct(S.d7)} ` },
+    (costS||durS||hasLines) && { bg: slate, inner: fg(ink) + " " + [costS,durS,hasLines?("+"+(S.add||0)+" -"+(S.del||0)):null].filter(Boolean).join(" · ") + " " },
   ].filter(Boolean);
   return blocks(L);
 },
 
-22: () => { // Vector — outlined, stroke is state (font-safe)
+22: () => { // Vector — stroke caps, stroke color is state (needs U+276C/D — Cascadia ok)
   const cy="#35C4F0", mg="#F050A8", ye="#F0E040", wh="#EDEDF5", gr="#6a7080";
   const mc = mk(cy, ye, mg);
-  const box = (t, col) => c(col, "❬") + c(col, t) + c(col, "❭");
+  const bL = plain ? "<" : "❬", bR = plain ? ">" : "❭";
+  const box = (t, col) => c(col, B + bL + NB + t + B + bR + NB);
   return [
     box(B + "◆ " + S.model + NB, cy),
     box(S.dir, wh),
-    S.branch && box("⌥ " + S.branch, gr),
+    S.branch && box("▸ " + S.branch, gr),
     has(S.ctx) && box("ctx " + pct(S.ctx), mc(S.ctx)),
-    (has(S.h5)||has(S.d7)) && box([has(S.h5)&&"5h "+pct(S.h5), has(S.d7)&&"7d "+pct(S.d7)].filter(Boolean).join(" "), mc(Math.max(S.h5||0, S.d7||0))),
+    has(S.h5) && box("5h " + pct(S.h5), mc(S.h5)),
+    has(S.d7) && box("7d " + pct(S.d7), mc(S.d7)),
     (costS||durS||hasLines) && box([costS,durS,hasLines?("+"+(S.add||0)+" -"+(S.del||0)):null].filter(Boolean).join(" "), gr),
   ].filter(Boolean).join(" ") + R;
 },
@@ -420,41 +491,45 @@ const DESIGNS = {
 23: () => { // Geometric Art (Geometry Wars) — neon particles (font-safe)
   const cy="#40F0FF", li="#C8FF40", mg="#FF40C8", or="#FFA040", wh="#F0F8FF";
   const mc = mk(li, or, mg);
+  const sh = (o, f, p) => !has(p) || p < 50 ? o : f;
+  const hotB = (p, t) => has(p) && p >= 80 ? B + t + NB : t;
   return [
     c(cy,"✦") + " " + B + c(wh, S.model) + NB,
     c(cy, S.dir),
-    S.branch && c(li, "⌬ " + S.branch),
-    has(S.ctx) && c(mc(S.ctx), "◇ ctx " + pct(S.ctx)),
-    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(mc(S.h5),"△"+pct(S.h5)), has(S.d7)&&c(mc(S.d7),"▽"+pct(S.d7))].filter(Boolean).join(" "),
-    tailTxt("#6080b0", li, mg),
+    S.branch && c(li, "◈ " + S.branch),
+    has(S.ctx) && c(mc(S.ctx), hotB(S.ctx, sh("◇","◆",S.ctx) + " ctx " + pct(S.ctx))),
+    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(mc(S.h5), hotB(S.h5, sh("△","▲",S.h5)+pct(S.h5))), has(S.d7)&&c(mc(S.d7), hotB(S.d7, sh("▽","▼",S.d7)+pct(S.d7)))].filter(Boolean).join(" "),
+    tailTxt("#6080b0", li, mg, "  "),
   ].filter(Boolean).join(" " + c("#1a2a4a","┆") + " ") + R;
 },
 
 24: () => { // Pixel (Stardew) — chunky farm bars (font-safe)
   const wood="#B8763E", leaf="#5FA838", sky="#68A8E0", wheat="#E8C860", berry="#D05868", cream="#F8E8C8";
   const mc = mk(leaf, wheat, berry);
-  const pbar = (p, cells) => { const f = p<=0?0:Math.max(1,Math.round(p/100*cells));
-    return c(mc(p), "▓".repeat(f)) + c("#4a3828", "░".repeat(cells-f)); };
+  const px = (p) => c(mc(p), (p >= 80 ? B : "") + pct(p) + (p >= 80 ? NB : ""));
+  const pbar = (p, cells) => { const exact = Math.min(100, Math.max(0, p)) / 100 * cells; const full = Math.floor(exact); const edge = (p > 0 && full < cells && (full === 0 || exact - full >= 0.25)) ? 1 : 0; const empty = cells - full - edge; return "\x1b[48;2;42;30;20m" + (full ? c(mc(p), "▓".repeat(full)) : "") + (edge ? c(mc(p), "▒") : "") + (empty ? c("#4a3828", "░".repeat(empty)) : "") + "\x1b[49m"; };
   return [
-    bg(wood) + fg(cream) + `${B}◆${S.model}${NB}` + R,
+    bg(wood) + fg(cream) + ` ${B}◆${S.model}${NB} ` + R,
     c(cream, S.dir),
-    S.branch && c(sky, "⌥" + S.branch),
-    has(S.ctx) && c("#9a7a58","CTX") + pbar(S.ctx,6) + c(mc(S.ctx),pct(S.ctx)),
-    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c("#9a7a58","5H")+pbar(S.h5,3)+c(mc(S.h5),pct(S.h5)), has(S.d7)&&c("#9a7a58","7D")+pbar(S.d7,3)+c(mc(S.d7),pct(S.d7))].filter(Boolean).join(" "),
-    (costS||durS||hasLines) && c(wheat,"⛁") + tailTxt(wheat, leaf, berry),
+    S.branch && c(sky, "▸" + S.branch),
+    has(S.ctx) && c("#9a7a58","CTX") + pbar(S.ctx,6) + px(S.ctx),
+    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c("#9a7a58","5H")+pbar(S.h5,3)+px(S.h5), has(S.d7)&&c("#9a7a58","7D")+pbar(S.d7,3)+px(S.d7)].filter(Boolean).join(" "),
+    (costS||durS||hasLines) && (plain ? "" : c(wheat,"⛁")) + tailTxt(wheat, leaf, berry),
   ].filter(Boolean).join(" ") + R;
 },
 
 25: () => { // Cartoon (TF2) — RED vs BLU chips (nerd-font caps)
-  const red="#B8383B", blu="#5885A2", crm="#F0E6D2", tan="#C5AF91", ink="#2A2226";
-  const hot = (has(S.ctx)&&S.ctx>=80)||(has(S.d7)&&S.d7>=80);
+  const red="#B8383B", blu="#5885A2", crm="#F0E6D2", tan="#C5AF91", ink="#2A2226", org="#CF7336", gold="#E9B44C", brt="#E06C60";
+  const hot = has(S.ctx) && S.ctx >= 80;
+  const warm = has(S.ctx) && !hot && S.ctx >= 50;
+  const tint = (p) => p >= 80 ? B + fg(brt) + pct(p) + NB + fg(tan) : p >= 50 ? fg(gold) + pct(p) + fg(tan) : pct(p);
   const L = [
     { bg: red, inner: fg(crm) + B + `◆ ${S.model}` + NB },
     { bg: tan, inner: fg(ink) + S.dir },
-    S.branch && { bg: blu, inner: fg(crm) + `⌥ ${S.branch}` },
-    has(S.ctx) && { bg: hot?red:blu, inner: fg(crm) + (hot ? B+`ctx ${pct(S.ctx)} !`+NB : `ctx ${pct(S.ctx)}`) },
+    S.branch && { bg: blu, inner: fg(crm) + `${plain ? "⌥" : ""} ${S.branch}` },
+    has(S.ctx) && { bg: hot ? red : warm ? org : blu, inner: fg(crm) + (hot ? B + `ctx ${pct(S.ctx)} !` + NB : `ctx ${pct(S.ctx)}`) },
     (has(S.h5)||has(S.d7)||costS||durS||hasLines) && { bg: ink, inner: fg(tan) +
-      [has(S.h5)&&"5h "+pct(S.h5), has(S.d7)&&"7d "+pct(S.d7), costS, durS, hasLines?("+"+(S.add||0)+" -"+(S.del||0)):null].filter(Boolean).join(" · ") },
+      [has(S.h5)&&"5h "+tint(S.h5), has(S.d7)&&"7d "+tint(S.d7), costS, durS, hasLines?("+"+(S.add||0)+" -"+(S.del||0)):null].filter(Boolean).join(" · ") },
   ].filter(Boolean);
   return pills(L, true);
 },
@@ -462,28 +537,31 @@ const DESIGNS = {
 26: () => { // Cel Shading (Wind Waker) — flats with ink seams (font-safe)
   const sea="#2E9AC4", grass="#7AC74F", sand="#F5E29A", sail="#F0384A", ink="#17323E", foam="#EAF8FA";
   const mc = mk(grass, "#F0A830", sail);
+  const mw = mk(sand, "#F0A830", sail);
   const seam = bg(ink) + " " + R;
   const L = [
     { bg: sail, inner: fg(foam) + ` ${B}◆ ${S.model}${NB} ` },
     { bg: sea, inner: fg(foam) + ` ${S.dir} ` },
-    S.branch && { bg: grass, inner: fg(ink) + ` ⌥ ${S.branch} ` },
-    has(S.ctx) && { bg: mc(S.ctx), inner: fg(ink) + ` ctx ${pct(S.ctx)} ` },
-    (has(S.h5)||has(S.d7)) && { bg: sand, inner: fg(ink) + " " + [has(S.h5)&&"5h "+pct(S.h5), has(S.d7)&&"7d "+pct(S.d7)].filter(Boolean).join(" · ") + " " },
+    S.branch && { bg: grass, inner: fg(ink) + ` ▸ ${S.branch} ` },
+    has(S.ctx) && { bg: mc(S.ctx), inner: fg(S.ctx>=80?foam:ink) + (S.ctx>=80 ? ` ctx ${B}${pct(S.ctx)}${NB} ` : ` ctx ${pct(S.ctx)} `) },
+    has(S.h5) && { bg: mw(S.h5), inner: fg(S.h5>=80?foam:ink) + ` 5h ${pct(S.h5)} ` },
+    has(S.d7) && { bg: mw(S.d7), inner: fg(S.d7>=80?foam:ink) + ` 7d ${pct(S.d7)} ` },
     (costS||durS||hasLines) && { bg: foam, inner: fg(ink) + " " + [costS,durS,hasLines?("+"+(S.add||0)+" -"+(S.del||0)):null].filter(Boolean).join(" · ") + " " },
   ].filter(Boolean);
-  return L.map((p) => bg(p.bg) + p.inner + R).join(seam) + R;
+  return seam + L.map((p) => bg(p.bg) + p.inner + R).join(seam) + seam;
 },
 
 27: () => { // Monochromatic (Inside) — grayscale, one red at critical (font-safe)
   const wh="#E8E8E8", lt="#9A9A9A", md="#6A6A6A", dk="#454545", red="#C03030";
   const mc = (p) => !has(p) ? md : p>=80 ? red : p>=50 ? lt : md;
+  const val = (p) => p>=80 ? B + c(red, pct(p)) + NB : c(mc(p), pct(p));
   return [
     B + c(wh, S.model) + NB,
     c(lt, S.dir),
     S.branch && c(md, S.branch),
-    has(S.ctx) && c(dk,"ctx ") + c(mc(S.ctx), pct(S.ctx)),
-    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(dk,"5h ")+c(mc(S.h5),pct(S.h5)), has(S.d7)&&c(dk,"7d ")+c(mc(S.d7),pct(S.d7))].filter(Boolean).join("  "),
-    tailTxt(dk, lt, lt),
+    has(S.ctx) && c(dk,"ctx ") + val(S.ctx),
+    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(dk,"5h ")+val(S.h5), has(S.d7)&&c(dk,"7d ")+val(S.d7)].filter(Boolean).join("  "),
+    tailTxt(dk, lt, lt, "  "),
   ].filter(Boolean).join("  " + c("#333333","│") + "  ") + R;
 },
 };

@@ -92,7 +92,7 @@ Success = non-empty output containing the sample values, no error text.
 | 5 | Blocks | safe | | 19 | Dracula | safe |
 | 6 | Claymorphic | nerd-font | | 20 | Terminal Rain | safe |
 | 7 | Arcade HUD | emoji | | 21 | Flat (Monument Valley) | safe |
-| 8 | Gradient Sweep | safe | | 22 | Vector | safe |
+| 8 | Gradient Sweep | safe | | 22 | Vector | stroke caps |
 | 9 | Synthwave | safe | | 23 | Geometric Art | safe |
 | 10 | Phosphor LCD | safe | | 24 | Pixel (Stardew) | safe |
 | 11 | Brutalist | safe | | 25 | Cartoon (TF2) | nerd-font |
@@ -100,10 +100,15 @@ Success = non-empty output containing the sample values, no error text.
 | 13 | Swiss | safe | | 27 | Monochromatic (Inside) | safe |
 | 14 | Wabi-sabi | safe | | | | |
 
-"nerd-font" designs use powerline glyphs (arrows / round caps). Windows
-Terminal's default Cascadia Mono has them. If they render as boxes, either pick
-a "safe" design or set `STATUSLINE_PLAIN=1` in the environment — the engine
-falls back to flat blocks with colors intact.
+"nerd-font" designs use powerline glyphs (arrows / round caps / branch).
+Windows Terminal's default Cascadia Mono has them. "stroke caps" (Vector) uses
+❬ ❭, present in Cascadia but not every legacy font. If glyphs render as boxes,
+either pick a "safe" design or set `STATUSLINE_PLAIN=1` in the environment —
+the engine falls back to plain-glyph equivalents with colors intact.
+
+The gallery previews are generated from the engine's real output by
+`tools/build-gallery.js` — run it after any change to a design so the gallery
+never drifts from the terminal.
 
 ## Common mistakes
 

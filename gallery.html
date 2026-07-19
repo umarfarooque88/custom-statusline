@@ -41,24 +41,23 @@
   .pitch{ color:var(--sub); font-size:14px; margin:8px 0 16px; max-width:66ch; }
   .pitch b{ color:var(--fg); font-weight:600; }
 
+  /* one uniform dark panel for every design — the terminal is the terminal */
   .term{ background:var(--panel); border-radius:11px; padding:15px 16px; overflow-x:auto; }
   .row{ display:flex; align-items:center; gap:12px; }
   .row + .row{ margin-top:11px; }
-  .tag{ font:600 10px/1 ui-monospace,Consolas,monospace; letter-spacing:.1em; text-transform:uppercase;
+  .tag{ font:600 10px/1 ui-monospace,"Cascadia Code",Consolas,monospace; letter-spacing:.1em; text-transform:uppercase;
     color:#6f665c; flex:0 0 58px; }
   .tag.hot{ color:#b06a52; }
 
-  /* bar hosts monospace, preserves spacing */
-  .bar{ font:13.5px/1.35 "Cascadia Code",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
-    white-space:pre; display:inline-flex; align-items:stretch; }
-  .bar.hot{ font-size:12.5px; opacity:.96; }
-  .bar b{ font-weight:700; }
-
-  /* powerline / block cells */
-  .cell{ display:inline-flex; align-items:center; padding:2px 10px; white-space:pre; }
-  .arw{ width:12px; flex:0 0 12px; align-self:stretch; }
-  .pill{ display:inline-flex; align-items:center; padding:2px 12px; border-radius:999px; white-space:pre; }
-  .gap{ width:6px; flex:0 0 6px; }
+  /* preview rows are GENERATED from the engine's real ANSI output.
+     .r = one SGR run (inline-block so bg bands are uniform, terminal-cell-like);
+     .g = a PUA glyph (powerline arrow / round cap / branch) emulated in CSS/SVG. */
+  .bar{ font:13.5px/1 "Cascadia Code",ui-monospace,"SF Mono",Menlo,Consolas,monospace; white-space:pre; }
+  .bar.hot{ font-size:12.5px; }
+  .bar .r{ display:inline-block; height:1.62em; line-height:1.62em; white-space:pre; vertical-align:top; }
+  .bar .g{ display:inline-block; width:.6em; height:1.62em; vertical-align:top; }
+  .bar .g.br{ padding:.16em .06em; }
+  .bar .g i{ display:block; width:100%; height:100%; }
 
   /* group headings */
   .grouphd{ display:flex; align-items:baseline; gap:14px; margin:38px 2px 2px; }
@@ -67,17 +66,6 @@
   .grouphd span{ font:600 11px/1 ui-monospace,Consolas,monospace; letter-spacing:.08em;
     text-transform:uppercase; color:var(--sub); white-space:nowrap; }
   .grouphd hr{ flex:1; border:0; border-top:1px solid var(--line); }
-
-  /* expressive-style preview flourishes (terminal reality noted in each pitch) */
-  .pill.clay{ border-radius:13px; box-shadow:0 2px 0 rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.4); }
-  .term.clay{ background:#211a13; }
-  .bar.arcade{ letter-spacing:.02em; }
-  .bar.neon *{ text-shadow:0 0 5px currentColor; }
-  .term.neon{ background:#0a0a16; }
-  .term.lcd{ background:#140d02;
-    background-image:repeating-linear-gradient(0deg, rgba(255,176,0,.05) 0 1px, transparent 1px 3px); }
-  .bar.lcd{ letter-spacing:.06em; }
-  .bar.lcd *{ text-shadow:0 0 4px rgba(255,176,0,.45); }
 
   .foot{ margin-top:34px; padding:18px 20px; border:1px dashed var(--line); border-radius:14px;
     background:color-mix(in srgb,var(--accent) 6%,transparent); font-size:14.5px; }
@@ -94,16 +82,13 @@
     color:var(--sub); display:flex; align-items:center; gap:8px; }
   .cardcmd code{ color:var(--accent); background:color-mix(in srgb,var(--accent) 9%,transparent);
     padding:4px 8px; border-radius:6px; font-weight:700; }
-  .legend{ display:flex; gap:16px; flex-wrap:wrap; margin-top:10px; font-size:12.5px; color:var(--sub); }
-  .legend span{ display:inline-flex; align-items:center; gap:6px; }
-  .legend i{ width:11px; height:11px; border-radius:3px; display:inline-block; }
 </style>
 
 <div class="wrap">
   <header>
     <p class="kick">statusLine · gallery</p>
     <h1>Twenty-seven directions. Pick one.</h1>
-    <p class="intro">Each is a different structural take on the same data — real color, live example values. Every card shows a calm and a high-usage state so you can see the meters warn. <b>Badges:</b> <span style="color:#4f7a3f">font-safe</span> works anywhere; <span style="color:#a8722a">powerline / emoji</span> need glyphs your terminal already renders.</p>
+    <p class="intro">Every preview below is <b>generated from the engine's real terminal output</b> — same characters, same colors, nothing embellished. Each card shows a calm and a high-usage state so you can see the meters warn. <b>Badges:</b> <span style="color:#4f7a3f">font-safe</span> works anywhere; <span style="color:#a8722a">powerline / emoji</span> need glyphs your terminal already renders.</p>
     <div class="howto">🎨 <span>Found one you like? Go back to Claude Code and reply with its <b>number</b>.</span> <span>To change your design anytime later, run</span> <code>/custom-statusline</code> <span>— same flow, forever.</span></div>
   </header>
 
@@ -115,540 +100,187 @@
 </div>
 
 <script>
-// ---- shared palettes -------------------------------------------------------
-const WARM = { coral:'#D97757', slate:'#2E2A2A', clay:'#7A5A4A', ink:'#1E1B1A',
-  cream:'#F2EFEA', sage:'#8A9A5B', amber:'#E0A84A', danger:'#C94A3E',
-  add:'#96C878', del:'#D66E64', muted:'#A89E96', track:'#3a342e', panel:'#14110f' };
-const COOL = { lav:'#B5A8FF', ink:'#181626', dir:'#34324A', dirfg:'#E8E6F5',
-  branch:'#443F66', green:'#7FD1AE', amber:'#F0C36A', rose:'#F0798A',
-  tail:'#242336', muted:'#8E8BAC', panel:'#100f19' };
-
-const mcW = p => p==null?WARM.muted : p>=80?WARM.danger : p>=50?WARM.amber : WARM.sage;
-const mcC = p => p==null?COOL.muted : p>=80?COOL.rose   : p>=50?COOL.amber : COOL.green;
-
-const CALM = { model:'O4.8', dir:'directory', branch:'main', ctx:4,  h5:1,  d7:0,  cost:'0.23', dur:'00:02', add:0,   del:0 };
-const HOT  = { model:'O4.8', dir:'directory', branch:'release/1.2', ctx:88, h5:71, d7:92, cost:'3.10', dur:'00:47',  add:612, del:208 };
-
-const sp = n => ' '.repeat(n);
-const c  = (col,txt) => `<span style="color:${col}">${txt}</span>`;
-// full tail: cost, active time, +lines -lines — every design shows all data
-const tl = (s,mut,addC,delC,sep='  ') =>
-  c(mut,'$'+s.cost+sep+s.dur)+sep+c(addC,'+'+s.add)+' '+c(delC,'-'+s.del);
-
-// ---- 1 · Kiln Flow (warm powerline arrows) ---------------------------------
-function kiln(s){
-  const W=WARM;
-  const segs=[
-    {bg:W.coral, fg:W.ink,   h:`<b>◆ ${s.model}</b>`},
-    {bg:W.slate, fg:W.cream, h:s.dir},
-    s.branch && {bg:W.clay,  fg:W.cream, h:`⌥ ${s.branch}`},
-    {bg:mcW(s.ctx), fg:W.ink, h:`ctx ${s.ctx}%`},
-    {bg:W.slate, fg:W.cream, h:`${c(W.muted,'5h')} ${c(mcW(s.h5),s.h5+'%')} ${c(W.muted,'·')} ${c(W.muted,'7d')} ${c(mcW(s.d7),s.d7+'%')}`},
-    {bg:W.ink, fg:W.muted, h:`${c(W.muted,'$'+s.cost+'  '+s.dur+'  ')}${c(W.add,'+'+s.add)} ${c(W.del,'-'+s.del)}`},
-  ].filter(Boolean);
-  let out='';
-  segs.forEach((g,i)=>{
-    out+=`<span class="cell" style="background:${g.bg};color:${g.fg}">${g.h}</span>`;
-    const next=i+1<segs.length?segs[i+1].bg:W.panel;
-    out+=`<span class="arw" style="background:${next}"><span style="display:block;width:100%;height:100%;background:${g.bg};clip-path:polygon(0 0,0 100%,100% 50%)"></span></span>`;
-  });
-  return out;
-}
-
-// ---- 2 · Nightshade (cool floating pills) ----------------------------------
-function night(s){
-  const K=COOL;
-  const pills=[
-    {bg:K.lav,   fg:K.ink,   h:`<b>◆ ${s.model}</b>`},
-    {bg:K.dir,   fg:K.dirfg, h:s.dir},
-    s.branch && {bg:K.branch,fg:K.lav,   h:`⎇ ${s.branch}`},
-    {bg:K.tail,  fg:mcC(s.ctx), h:`ctx ${c(mcC(s.ctx),s.ctx+'%')}`},
-    {bg:K.tail,  fg:K.muted, h:`${c(K.muted,'5h')} ${c(mcC(s.h5),s.h5+'%')}  ${c(K.muted,'7d')} ${c(mcC(s.d7),s.d7+'%')}`},
-    {bg:K.tail,  fg:K.muted, h:`${c(K.muted,'$'+s.cost)}  ${c(K.muted,s.dur)}  ${c(K.green,'+'+s.add)} ${c(K.rose,'-'+s.del)}`},
-  ].filter(Boolean);
-  let out='';
-  pills.forEach((p,i)=>{
-    out+=`<span class="pill" style="background:${p.bg};color:${p.fg}">${p.h}</span>`;
-    if(i<pills.length-1) out+=`<span class="gap"></span>`;
-  });
-  return out;
-}
-
-// ---- 3 · Hairline (no fills, colored text + rules) -------------------------
-function hair(s){
-  const W=WARM, div=c('#4a433d','│');
-  return [
-    `<b>${c(W.coral,'◆ '+s.model)}</b>`,
-    c('#dcd6cc', s.dir),
-    s.branch ? c('#c69a54','⌥ '+s.branch) : null,
-    c(mcW(s.ctx), 'ctx '+s.ctx+'%'),
-    `${c(W.muted,'5h')} ${c(mcW(s.h5),s.h5+'%')} ${c('#6a625a','·')} ${c(W.muted,'7d')} ${c(mcW(s.d7),s.d7+'%')}`,
-    c('#7c736a', '$'+s.cost+'  '+s.dur+'  +'+s.add+' -'+s.del),
-  ].filter(Boolean).join(`  ${div}  `);
-}
-
-// ---- 4 · Gauge (block-bar meters) ------------------------------------------
-function gaugeBar(pct,color,cells){
-  const fill = pct<=0?0:Math.max(1,Math.round(pct/100*cells));
-  return c(color,'█'.repeat(fill)) + c(WARM.track,'█'.repeat(cells-fill));
-}
-function gauge(s){
-  const W=WARM;
-  const edge=(col,pct,cells)=>`${c('#5b544c','▕')}${gaugeBar(pct,col,cells)}${c('#5b544c','▏')}`;
-  return [
-    `<b>${c(W.coral,'◆ '+s.model)}</b> ${c(W.cream,s.dir)}${s.branch?' '+c(W.clay,'⌥'+s.branch):''}`,
-    `${c(W.muted,'ctx')} ${edge(mcW(s.ctx),s.ctx,8)} ${c(mcW(s.ctx),s.ctx+'%')}`,
-    `${c(W.muted,'5h')} ${edge(mcW(s.h5),s.h5,4)} ${c(mcW(s.h5),s.h5+'%')}`,
-    `${c(W.muted,'7d')} ${edge(mcW(s.d7),s.d7,4)} ${c(mcW(s.d7),s.d7+'%')}`,
-    tl(s,'#7c736a',WARM.add,WARM.del),
-  ].join('   ');
-}
-
-// ---- 5 · Blocks (flush hard-edged bars, no glyphs) -------------------------
-function blocks(s){
-  const W=WARM;
-  const segs=[
-    {bg:W.coral, fg:W.ink,   h:`<b>◆ ${s.model}</b>`},
-    {bg:'#403a34', fg:W.cream, h:s.dir},
-    s.branch && {bg:W.clay,  fg:W.cream, h:`⌥ ${s.branch}`},
-    {bg:mcW(s.ctx), fg:W.ink, h:`ctx ${s.ctx}%`},
-    {bg:'#2a2622', fg:W.cream, h:`${c(W.muted,'5h')} ${c(mcW(s.h5),s.h5+'%')} ${c(mcW(s.d7),' 7d '+s.d7+'%')}`},
-    {bg:W.ink, fg:W.muted, h:`${c(W.muted,'$'+s.cost+' '+s.dur+' ')}${c(W.add,'+'+s.add)} ${c(W.del,'-'+s.del)}`},
-  ].filter(Boolean);
-  return segs.map(g=>`<span class="cell" style="background:${g.bg};color:${g.fg}">${g.h}</span>`).join('');
-}
-
-// ==== EXPRESSIVE SET ========================================================
-const hex2rgb = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16));
-const lerp = (a,b,t) => Math.round(a+(b-a)*t);
-function gradientText(str, stops){
-  const chars=[...str], n=chars.length;
-  return chars.map((ch,i)=>{
-    if(ch===' ') return ' ';
-    const t=n<=1?0:i/(n-1);
-    const seg=t*(stops.length-1), k=Math.min(stops.length-2,Math.floor(seg)), f=seg-k;
-    const a=hex2rgb(stops[k]), b=hex2rgb(stops[k+1]);
-    return c(`rgb(${lerp(a[0],b[0],f)},${lerp(a[1],b[1],f)},${lerp(a[2],b[2],f)})`, ch);
-  }).join('');
-}
-
-// ---- 6 · Claymorphic (soft pastel pills — nod to Claycraft) ----------------
-const CLAY={ terra:'#E0906E', sand:'#E7D3AC', brown:'#BE9A75', ink:'#4A3A2E',
-  cream:'#FBF3E6', sage:'#AEC58C', warn:'#E6B24C', crit:'#DE7B63', muted:'#9C8B78' };
-const mcClay = p => p==null?CLAY.muted : p>=80?CLAY.crit : p>=50?CLAY.warn : CLAY.sage;
-function clay(s){
-  const K=CLAY;
-  const pills=[
-    {bg:K.terra, fg:K.ink,   h:`<b>◆ ${s.model}</b>`},
-    {bg:K.sand,  fg:K.ink,   h:s.dir},
-    s.branch && {bg:K.brown, fg:K.cream, h:`⌥ ${s.branch}`},
-    {bg:mcClay(s.ctx), fg:K.ink, h:`ctx ${s.ctx}%`},
-    {bg:K.sand,  fg:K.ink,   h:`${c(K.muted,'5h')} ${c(mcClay(s.h5),s.h5+'%')}  ${c(K.muted,'7d')} ${c(mcClay(s.d7),s.d7+'%')}`},
-    {bg:K.brown, fg:K.cream, h:`$${s.cost} · ${s.dur} · ${c('#D8E8C0','+'+s.add)} ${c('#F8D0C0','-'+s.del)}`},
-  ].filter(Boolean);
-  return pills.map((p,i)=>`<span class="pill clay" style="background:${p.bg};color:${p.fg}">${p.h}</span>${i<pills.length-1?'<span class="gap"></span>':''}`).join('');
-}
-
-// ---- 7 · Arcade HUD (health/energy bars, emoji) ----------------------------
-function xpbar(pct,color,cells){
-  const fill=pct<=0?0:Math.max(1,Math.round(pct/100*cells));
-  return c(color,'▰'.repeat(fill))+c('#3a342e','▱'.repeat(cells-fill));
-}
-function arcade(s){
-  const W=WARM;
-  return [
-    `${c('#F0C36A','★')} <b>${c(W.cream,s.model)}</b>`,
-    `${c('#8fb0d6','▸')} ${c(W.cream,s.dir)}`,
-    s.branch ? c('#c69a54','⑂ '+s.branch) : null,
-    `${c(mcW(s.ctx),'❤')} ${xpbar(s.ctx,mcW(s.ctx),6)} ${c(mcW(s.ctx),s.ctx+'%')}`,
-    `${c('#F0C36A','⚡')} 5h ${xpbar(s.h5,mcW(s.h5),4)} ${c(mcW(s.h5),s.h5+'%')}  7d ${xpbar(s.d7,mcW(s.d7),4)} ${c(mcW(s.d7),s.d7+'%')}`,
-    `${c('#E7C15A','◈')} ${tl(s,W.muted,W.add,W.del)}`,
-  ].filter(Boolean).join('   ');
-}
-
-// ---- 8 · Gradient Sweep (per-character color flow) -------------------------
-function gradient(s){
-  const stops=['#D97757','#E0A84A','#8A9A5B','#5AB0C0','#9B7BE0'];
-  const parts=[`◆ ${s.model}`, s.dir, s.branch, `ctx ${s.ctx}%`, `5h ${s.h5}% · 7d ${s.d7}%`, `$${s.cost} ${s.dur} +${s.add} -${s.del}`].filter(Boolean);
-  return gradientText(parts.join('  ›  '), stops);
-}
-
-// ---- 9 · Synthwave (neon on near-black) ------------------------------------
-const NEON={ cyan:'#3df0e6', mag:'#ff5fd2', pur:'#b48bff', dim:'#5a6a8a',
-  warn:'#ffd166', crit:'#ff4d6d' };
-const mcNeon = p => p==null?NEON.dim : p>=80?NEON.crit : p>=50?NEON.warn : NEON.cyan;
-function neon(s){
-  const N=NEON, sep=c(N.mag,'▸');
-  return [
-    `<b>${c(N.cyan,'◆ '+s.model)}</b>`,
-    c(N.pur, s.dir),
-    s.branch ? c(N.mag,'⌥ '+s.branch) : null,
-    c(mcNeon(s.ctx),'ctx '+s.ctx+'%'),
-    `${c(N.dim,'5h')} ${c(mcNeon(s.h5),s.h5+'%')} ${c(N.dim,'·')} ${c(N.dim,'7d')} ${c(mcNeon(s.d7),s.d7+'%')}`,
-    tl(s,N.dim,N.cyan,N.crit),
-  ].filter(Boolean).join(`  ${sep}  `);
-}
-
-// ---- 10 · Phosphor LCD (single-hue amber, Pip-Boy) -------------------------
-function lcd(s){
-  const amb='#FFB000', dim='#8a5f12', hi='#FFD36B';
-  const seg=c('#6a4a10','//');
-  const bar=pct=>{ const cells=5, fill=pct<=0?0:Math.max(1,Math.round(pct/100*cells));
-    return c(pct>=80?'#FF7A45':amb,'▮'.repeat(fill))+c('#3a2a08','▮'.repeat(cells-fill)); };
-  return [
-    `<b>${c(hi,s.model)}</b>`,
-    c(amb, s.dir.toUpperCase()),
-    s.branch ? c(amb, s.branch.toUpperCase()) : null,
-    `${c(dim,'CTX')} ${bar(s.ctx)} ${c(amb,s.ctx+'%')}`,
-    `${c(dim,'5H')} ${bar(s.h5)} ${c(amb,s.h5+'%')} ${c(dim,'7D')} ${bar(s.d7)} ${c(amb,s.d7+'%')}`,
-    tl(s,dim,amb,'#FF7A45'),
-  ].filter(Boolean).join(`  ${seg}  `);
-}
-
-// ==== STYLE STUDIES =========================================================
-// 11 · Brutalist — raw, unpadded, all-caps, square brackets, one shout color
-function brutal(s){
-  const red='#FF3B1F', wh='#E8E4DC', gr='#6E6A62';
-  const alert = s.ctx>=80||s.d7>=80;
-  return [
-    `<b>${c(alert?red:wh,'['+s.model.toUpperCase()+']')}</b>`,
-    c(wh, s.dir.toUpperCase()),
-    s.branch ? c(gr,'/'+s.branch.toUpperCase()) : null,
-    c(alert?red:wh, `CTX_${s.ctx}`),
-    c(gr, `5H_${s.h5} 7D_${s.d7}`),
-    c(gr, `$${s.cost} ${s.dur} +${s.add}/-${s.del}`),
-    alert ? `<b>${c(red,'!! LIMIT')}</b>` : c(gr,'OK'),
-  ].filter(Boolean).join(' ');
-}
-
-// 12 · Bauhaus — primary triad, geometric marks encode state
-function bauhaus(s){
-  const red='#D93A2B', yel='#E8B21E', blu='#2E5FA3', wh='#EDE8E0', gr='#8b857c';
-  const shape = p => p>=80 ? c(red,'▲') : p>=50 ? c(yel,'■') : c(blu,'●');
-  return [
-    `${c(red,'●')}${c(yel,'■')}${c(blu,'▲')} <b>${c(wh,s.model)}</b>`,
-    c(wh, s.dir),
-    s.branch ? c(yel, s.branch) : null,
-    `${shape(s.ctx)} ${c(wh,'ctx '+s.ctx+'%')}`,
-    `${shape(s.h5)} ${c(gr,'5h '+s.h5+'%')}  ${shape(s.d7)} ${c(gr,'7d '+s.d7+'%')}`,
-    tl(s,gr,blu,red),
-  ].filter(Boolean).join('   ');
-}
-
-// 13 · Swiss — grid discipline, one red accent, aligned columns
-function swiss(s){
-  const red='#E30613', ink='#DEDBD4', gr='#78746c';
-  return [
-    `<b>${c(ink,s.model)}</b>${c(red,'.')}`,
-    c(ink, s.dir) + (s.branch ? c(gr,' — '+s.branch) : ''),
-    `${c(gr,'ctx')} ${c(s.ctx>=80?red:ink, String(s.ctx).padStart(2)+'%')}`,
-    `${c(gr,'5h')} ${c(s.h5>=80?red:ink, String(s.h5).padStart(2)+'%')}`,
-    `${c(gr,'7d')} ${c(s.d7>=80?red:ink, String(s.d7).padStart(2)+'%')}`,
-    tl(s,gr,ink,red),
-  ].join('    ');
-}
-
-// 14 · Wabi-sabi — muted moss/stone, meters as slow-filling moons
-function wabi(s){
-  const moss='#8A9B7C', stone='#A8A296', ink='#D8D2C6', mist='#6b675e', ochre='#C2A36B', rust='#B0705C';
-  const moon = p => p>=80 ? c(rust,'●') : p>=50 ? c(ochre,'◐') : p>0 ? c(moss,'◔') : c(mist,'○');
-  return [
-    c(moss,'◆')+' '+c(ink,s.model),
-    c(stone, s.dir),
-    s.branch ? c(mist, s.branch) : null,
-    `${moon(s.ctx)} ${c(mist,'ctx ')}${c(stone,s.ctx+'%')}`,
-    `${moon(s.h5)} ${c(mist,'5h ')}${c(stone,s.h5+'%')}  ${moon(s.d7)} ${c(mist,'7d ')}${c(stone,s.d7+'%')}`,
-    tl(s,mist,moss,rust),
-  ].filter(Boolean).join('   ');
-}
-
-// 15 · Glassmorphic — frosted translucent panels (preview blur; terminal = tints)
-function glass(s){
-  const wh='#EFF3FA', mut='#9FB0CC';
-  const mc = p => p>=80?'#FF8FA3':p>=50?'#FFD98E':'#9BE8C8';
-  const pane=(h,strong)=>`<span class="pill" style="background:rgba(160,190,255,${strong?.22:.12});backdrop-filter:blur(4px);border:1px solid rgba(200,220,255,.25);color:${wh}">${h}</span>`;
-  return [
-    pane(`<b>◆ ${s.model}</b>`,1),
-    pane(c(wh,s.dir)),
-    s.branch?pane(c(mut,'⌥ '+s.branch)):null,
-    pane(`${c(mut,'ctx')} ${c(mc(s.ctx),s.ctx+'%')}`),
-    pane(`${c(mut,'5h')} ${c(mc(s.h5),s.h5+'%')} ${c(mut,'7d')} ${c(mc(s.d7),s.d7+'%')}`),
-    pane(tl(s,mut,'#9BE8C8','#FF8FA3')),
-  ].filter(Boolean).join('<span class="gap"></span>');
-}
-
-// 16 · Memphis — clashing 80s pop, zigzag separators, confetti color
-function memphis(s){
-  const pk='#FF6FB5', te='#2EC4B6', ye='#FFD23F', pu='#9B5DE5', wh='#F5F0E8';
-  const mc = p => p>=80?pk:p>=50?ye:te;
-  return [
-    `<b>${c(pk,'◆')}${c(te,s.model)}</b>`,
-    c(ye, s.dir),
-    s.branch ? c(pu,'⌥'+s.branch) : null,
-    `${c(wh,'ctx')}${c(mc(s.ctx),s.ctx+'%')}`,
-    `${c(wh,'5h')}${c(mc(s.h5),s.h5+'%')} ${c(wh,'7d')}${c(mc(s.d7),s.d7+'%')}`,
-    tl(s,wh,te,pk),
-  ].filter(Boolean).join(` ${c(pu,'▚')} `);
-}
-
-// 17 · Art Deco — champagne gold on charcoal, fan ornaments
-function deco(s){
-  const gold='#D4AF6A', hi='#F0DCA8', gr='#8a7d5e', em='#5FA88C', ruby='#C25B5B';
-  const mc = p => p>=80?ruby:p>=50?gold:em;
-  return [
-    `${c(gold,'❯❯')} <b>${c(hi,s.model.toUpperCase())}</b> ${c(gold,'❮❮')}`,
-    c(hi, s.dir),
-    s.branch ? c(gr,'§ '+s.branch) : null,
-    `${c(gr,'CTX')} ${c(mc(s.ctx),s.ctx+'%')}`,
-    `${c(gr,'5H')} ${c(mc(s.h5),s.h5+'%')} ${c(gold,'∙')} ${c(gr,'7D')} ${c(mc(s.d7),s.d7+'%')}`,
-    tl(s,gr,em,ruby),
-  ].filter(Boolean).join(`  ${c(gold,'━')}  `);
-}
-
-// 18 · Nord — arctic blues, frost-quiet, minimal punctuation
-function nord(s){
-  const frost='#88C0D0', snow='#ECEFF4', blue='#81A1C1', gray='#616E88', grn='#A3BE8C', yel='#EBCB8B', red='#BF616A';
-  const mc = p => p>=80?red:p>=50?yel:grn;
-  return [
-    `<b>${c(frost,'◆ '+s.model)}</b>`,
-    c(snow, s.dir),
-    s.branch ? c(blue,' '+s.branch) : null,
-    `${c(gray,'ctx')} ${c(mc(s.ctx),s.ctx+'%')}`,
-    `${c(gray,'5h')} ${c(mc(s.h5),s.h5+'%')}`,
-    `${c(gray,'7d')} ${c(mc(s.d7),s.d7+'%')}`,
-    tl(s,gray,grn,red),
-  ].filter(Boolean).join('  ');
-}
-
-// 19 · Dracula — the classic theme's exact palette
-function dracula(s){
-  const pur='#BD93F9', pk='#FF79C6', grn='#50FA7B', yel='#F1FA8C', org='#FFB86C', red='#FF5555', fg='#F8F8F2', com='#6272A4';
-  const mc = p => p>=80?red:p>=50?org:grn;
-  return [
-    `<b>${c(pur,'◆ '+s.model)}</b>`,
-    c(fg, s.dir),
-    s.branch ? c(pk,' '+s.branch) : null,
-    `${c(com,'ctx')} ${c(mc(s.ctx),s.ctx+'%')}`,
-    `${c(com,'5h')} ${c(mc(s.h5),s.h5+'%')} ${c(com,'7d')} ${c(mc(s.d7),s.d7+'%')}`,
-    tl(s,yel,grn,red),
-  ].filter(Boolean).join(` ${c(com,'∷')} `);
-}
-
-// 20 · Terminal Rain — Matrix greens, brightness = importance
-function matrix(s){
-  const hi='#AAFFAA', md='#33FF66', lo='#0E8A3E', dim='#0A5C2A', warn='#CCFF33', crit='#FF6B4A';
-  const mc = p => p>=80?crit:p>=50?warn:md;
-  return [
-    `<b>${c(hi,'▌'+s.model+'▐')}</b>`,
-    c(md, s.dir),
-    s.branch ? c(lo,'⌥'+s.branch) : null,
-    `${c(dim,'ctx')}${c(mc(s.ctx),s.ctx+'%')}`,
-    `${c(dim,'5h')}${c(mc(s.h5),s.h5+'%')} ${c(dim,'7d')}${c(mc(s.d7),s.d7+'%')}`,
-    tl(s,dim,md,crit),
-  ].filter(Boolean).join(` ${c(dim,'⋮')} `);
-}
-
-// ==== GAME ART STYLES =======================================================
-// 21 · Flat (Monument Valley) — soft pastel geometry, no outlines, no noise
-function flatMV(s){
-  const rose='#E8A0A8', teal='#7FC8C4', sandy='#F0D8B8', peach='#F2B98A', ink='#4A3D55', lav='#9B8AB8';
-  const mc = p => p>=80?'#D97788':p>=50?peach:teal;
-  const segs=[
-    {bg:rose,  fg:ink, h:`<b>◆ ${s.model}</b>`},
-    {bg:sandy, fg:ink, h:s.dir},
-    s.branch && {bg:lav, fg:'#F5F0FA', h:`⌥ ${s.branch}`},
-    {bg:mc(s.ctx), fg:ink, h:`ctx ${s.ctx}%`},
-    {bg:teal,  fg:ink, h:`5h ${s.h5}% · 7d ${s.d7}%`},
-    {bg:peach, fg:ink, h:`$${s.cost} · ${s.dur} · +${s.add} -${s.del}`},
-  ].filter(Boolean);
-  return segs.map(g=>`<span class="cell" style="background:${g.bg};color:${g.fg}">${g.h}</span>`).join('');
-}
-
-// 22 · Vector — outlined shapes, no fills; stroke color carries state
-function vector(s){
-  const cy='#35C4F0', mg='#F050A8', ye='#F0E040', wh='#EDEDF5', gr='#6a7080';
-  const mc = p => p>=80?mg:p>=50?ye:cy;
-  const box=(h,col)=>`<span class="pill" style="border:1.5px solid ${col};color:${col};background:transparent;border-radius:6px">${h}</span>`;
-  return [
-    box(`<b>◆ ${s.model}</b>`, cy),
-    box(s.dir, wh),
-    s.branch?box('⌥ '+s.branch, gr):null,
-    box(`ctx ${s.ctx}%`, mc(s.ctx)),
-    box(`5h ${s.h5}%  7d ${s.d7}%`, mc(Math.max(s.h5,s.d7))),
-    box(`$${s.cost} ${s.dur} +${s.add} -${s.del}`, gr),
-  ].filter(Boolean).join('<span class="gap"></span>');
-}
-
-// 23 · Geometric Art (Geometry Wars) — neon particles on grid-dark
-function geoWars(s){
-  const grid='#1a2a4a', cy='#40F0FF', li='#C8FF40', mg='#FF40C8', or='#FFA040', wh='#F0F8FF';
-  const mc = p => p>=80?mg:p>=50?or:li;
-  return [
-    `${c(cy,'✦')} <b>${c(wh,s.model)}</b>`,
-    c(cy, s.dir),
-    s.branch ? c(li,'⌬ '+s.branch) : null,
-    `${c(mc(s.ctx),'◇')} ${c(mc(s.ctx),'ctx '+s.ctx+'%')}`,
-    `${c(mc(s.h5),'△')}${c(mc(s.h5),s.h5+'%')} ${c(mc(s.d7),'▽')}${c(mc(s.d7),s.d7+'%')}`,
-    tl(s,'#6080b0',li,mg),
-  ].filter(Boolean).join(` ${c(grid,'┆')} `);
-}
-
-// 24 · Pixel (Stardew Valley) — chunky ▓▒░ bars, warm farm palette
-function pixelSV(s){
-  const wood='#B8763E', leaf='#5FA838', sky='#68A8E0', wheat='#E8C860', berry='#D05868', ink='#3A2820', cream='#F8E8C8';
-  const mc = p => p>=80?berry:p>=50?wheat:leaf;
-  const pbar=(p,cells)=>{ const f=p<=0?0:Math.max(1,Math.round(p/100*cells));
-    return c(mc(p),'▓'.repeat(f))+c('#4a3828','░'.repeat(cells-f)); };
-  return [
-    `<span class="cell" style="background:${wood};color:${cream}"><b>◆${s.model}</b></span>`,
-    c(cream, s.dir),
-    s.branch ? c(sky,'⌥'+s.branch) : null,
-    `${c('#9a7a58','CTX')}${pbar(s.ctx,6)}${c(mc(s.ctx),s.ctx+'%')}`,
-    `${c('#9a7a58','5H')}${pbar(s.h5,3)}${c(mc(s.h5),s.h5+'%')} ${c('#9a7a58','7D')}${pbar(s.d7,3)}${c(mc(s.d7),s.d7+'%')}`,
-    c(wheat,'⛁')+tl(s,wheat,leaf,berry),
-  ].filter(Boolean).join(' ');
-}
-
-// 25 · Cartoon (TF2) — team red vs blu, chunky, playful shouts
-function cartoon(s){
-  const red='#B8383B', blu='#5885A2', crm='#F0E6D2', tan='#C5AF91', ink='#2A2226';
-  const hot = s.ctx>=80||s.d7>=80;
-  const segs=[
-    {bg:red, fg:crm, h:`<b>◆ ${s.model}</b>`},
-    {bg:tan, fg:ink, h:s.dir},
-    s.branch && {bg:blu, fg:crm, h:`⌥ ${s.branch}`},
-    {bg:hot?red:blu, fg:crm, h:hot?`<b>ctx ${s.ctx}% !</b>`:`ctx ${s.ctx}%`},
-    {bg:ink, fg:tan, h:`5h ${s.h5}% · 7d ${s.d7}% · $${s.cost} · ${s.dur} · +${s.add} -${s.del}`},
-  ].filter(Boolean);
-  return segs.map((g,i)=>`<span class="pill" style="background:${g.bg};color:${g.fg};border-radius:8px">${g.h}</span>${i<segs.length-1?'<span class="gap"></span>':''}`).join('');
-}
-
-// 26 · Cel Shading (Wind Waker) — bright sea flats with dark outline seams
-function celWW(s){
-  const sea='#2E9AC4', grass='#7AC74F', sand='#F5E29A', sail='#F0384A', ink='#17323E', foam='#EAF8FA';
-  const mc = p => p>=80?sail:p>=50?'#F0A830':grass;
-  const segs=[
-    {bg:sail,  fg:foam, h:`<b>◆ ${s.model}</b>`},
-    {bg:sea,   fg:foam, h:s.dir},
-    s.branch && {bg:grass, fg:ink, h:`⌥ ${s.branch}`},
-    {bg:mc(s.ctx), fg:ink, h:`ctx ${s.ctx}%`},
-    {bg:sand,  fg:ink, h:`5h ${s.h5}% · 7d ${s.d7}%`},
-    {bg:foam,  fg:ink, h:`$${s.cost} · ${s.dur} · +${s.add} -${s.del}`},
-  ].filter(Boolean);
-  return segs.map(g=>`<span class="cell" style="background:${g.bg};color:${g.fg};border:2px solid ${ink};border-right:0">${g.h}</span>`).join('')
-    +`<span style="border-left:2px solid ${ink}"></span>`;
-}
-
-// 27 · Monochromatic (Inside) — grayscale fog; one red only at critical
-function monoInside(s){
-  const wh='#E8E8E8', lt='#9A9A9A', md='#6A6A6A', dk='#454545', red='#C03030';
-  const mc = p => p>=80?red:p>=50?lt:md;
-  return [
-    `<b>${c(wh,s.model)}</b>`,
-    c(lt, s.dir),
-    s.branch ? c(md, s.branch) : null,
-    `${c(dk,'ctx')} ${c(mc(s.ctx), s.ctx+'%')}`,
-    `${c(dk,'5h')} ${c(mc(s.h5),s.h5+'%')}  ${c(dk,'7d')} ${c(mc(s.d7),s.d7+'%')}`,
-    tl(s,dk,lt,lt),
-  ].filter(Boolean).join(`  ${c('#333333','│')}  `);
-}
-
-// ---- assemble cards --------------------------------------------------------
-const DESIGNS=[
-  { group:'Everyday', name:'Kiln Flow',  badge:['powerline','font'],
-    pitch:'A refined take on what you have now — warm bars that flow into one another with pointed powerline seams. The <b>context gauge is the one full-color bar</b>; usage and metrics ride quietly behind it.',
-    fn:kiln },
+// ---- card metadata (previews live in PREVIEWS below, generated) ------------
+const CARDS=[
+  { group:'Everyday', name:'Kiln Flow', badge:['powerline','font'],
+    pitch:'A refined take on what you have now — warm bars that flow into one another with pointed powerline seams. The <b>context gauge is the one full-color bar</b>; usage and metrics ride quietly behind it.' },
   { name:'Nightshade', badge:['powerline','font'],
-    pitch:'A cooler world: each stat floats as its own rounded capsule on the dark. Lavender identity, mint-to-rose meters. <b>Reads calmer and more modern</b> than connected bars — more air, less weight.',
-    fn:night },
-  { name:'Hairline',   badge:['font-safe','safe'],
-    pitch:'No fills at all — just colored text divided by thin rules. The <b>quietest option</b>, and it needs no special font. Color still carries the signal: meters shift green→amber→red as they climb.',
-    fn:hair },
-  { name:'Gauge',      badge:['font-safe','safe'],
-    pitch:'Turns the numbers into little block-bars. You <b>see the fill</b> before you read the digits — context on an 8-cell bar, the two windows on 4-cell bars. Best if headroom is what you watch.',
-    fn:gauge },
-  { name:'Blocks',     badge:['font-safe','safe'],
-    pitch:'The colored-bar look with <b>hard rectangular edges instead of arrows</b> — so it needs no powerline font at all. Blunt, high-contrast, and reads instantly. A safe twin of Kiln Flow.',
-    fn:blocks },
+    pitch:'A cooler world: each stat floats as its own rounded capsule on the dark. Lavender identity, mint-to-rose meters. <b>Reads calmer and more modern</b> than connected bars — more air, less weight.' },
+  { name:'Hairline', badge:['font-safe','safe'],
+    pitch:'No fills at all — just colored text divided by thin rules. The <b>quietest option</b>, and it needs no special font. Color still carries the signal: meters shift green→amber→red as they climb.' },
+  { name:'Gauge', badge:['font-safe','safe'],
+    pitch:'Turns the numbers into little block-bars. You <b>see the fill</b> before you read the digits — context on an 8-cell bar, the two windows on 4-cell bars, with fractional edge cells for precision. Best if headroom is what you watch.' },
+  { name:'Blocks', badge:['font-safe','safe'],
+    pitch:'The colored-bar look with <b>hard rectangular edges instead of arrows</b> — so it needs no powerline font at all. Blunt, high-contrast, and reads instantly. A safe twin of Kiln Flow.' },
 
   { group:'Expressive', name:'Claymorphic', badge:['round caps','font'],
-    pitch:'Soft pastel <b>clay pills</b> — a nod to Claycraft. In the terminal the puffy look becomes rounded powerline caps ( ); the muted sand-and-terracotta palette is exact. The warmest, softest option here.',
-    fn:clay, cls:'clay', panel:'clay' },
+    pitch:'Soft pastel <b>clay pills</b> — a nod to Claycraft. In the terminal the puffy look becomes rounded powerline caps; the muted sand-and-terracotta palette is exact. The warmest, softest option here.' },
   { name:'Arcade HUD', badge:['emoji','font'],
-    pitch:'A <b>game HUD</b>: context is a ❤ health bar, the two windows are ⚡ energy meters, cost is loot. Uses emoji plus block-bars — playful, and it needs emoji glyphs (most terminals have them).',
-    fn:arcade, cls:'arcade' },
+    pitch:'A <b>game HUD</b>: context is a ❤ health bar, the two windows are ⚡ energy meters, cost is loot. Uses emoji plus block-bars — playful, and it needs emoji glyphs (most terminals have them).' },
   { name:'Gradient Sweep', badge:['font-safe','safe'],
-    pitch:'One smooth color sweep flows across the whole line — coral → gold → sage → teal → violet, recomputed per character. Fully terminal-native. <b>Trade-off:</b> the gradient replaces the green/amber/red warning colors — beauty over at-a-glance alarm.',
-    fn:gradient },
+    pitch:'One smooth color sweep flows across the whole line — coral → gold → sage → teal → violet, recomputed per character. Fully terminal-native. Under load the sweep never breaks: a <b>deep amber wash</b> rises beneath a percentage at 50%, deepening to a <b>bold ember chip</b> at 80% — beauty first, alarm intact.' },
   { name:'Synthwave', badge:['font-safe','safe'],
-    pitch:'Neon cyan identity, magenta seams, glowing on near-black. The <b>bloom is a preview flourish</b> — the terminal shows the same bright colors without the glow. Meters still warn: cyan → amber → hot-pink.',
-    fn:neon, cls:'neon', panel:'neon' },
+    pitch:'Neon cyan identity, magenta seams on near-black. No glow in a terminal — the bright neons carry it — and at 80%+ a meter lights up for real: an <b>inverted neon sign</b>, near-black digits on hot-pink. Meters warn: cyan → amber → hot-pink.' },
   { name:'Phosphor LCD', badge:['font-safe','safe'],
-    pitch:'Single-hue <b>amber phosphor</b>, like a Pip-Boy or old CRT. Everything uppercase, brightness carries emphasis, block-bar meters. Scanlines are preview-only. The most nostalgic — and fully font-safe.',
-    fn:lcd, cls:'lcd', panel:'lcd' },
+    pitch:'Single-hue <b>amber phosphor</b>, like a Pip-Boy or old CRT. Everything uppercase, <b>brightness carries emphasis</b> — dim labels, bright values, block-bar meters that burn brighter past 50% and go <b>overheat orange</b> past 80%. The most nostalgic — and fully font-safe.' },
 
   { group:'Style studies', name:'Brutalist', badge:['font-safe','safe'],
-    pitch:'Raw and unpadded: all-caps, square brackets, underscores, no decoration. One shout color — <b>the whole line stays bone-white until a limit nears, then the alarm goes red</b> and an explicit !! LIMIT flag appears.',
-    fn:brutal },
+    pitch:'Raw and unpadded: all-caps, square brackets, underscores, no decoration. One shout color — <b>metrics sit in concrete gray, promote to bone-white at 50%, and at 80% any limit goes red</b> and slams a solid !! LIMIT slab onto the end of the line.' },
   { name:'Bauhaus', badge:['font-safe','safe'],
-    pitch:'Primary triad on charcoal. <b>Geometry encodes state</b>: a blue ● is calm, a yellow ■ is warming, a red ▲ is critical — you read the shapes before the numbers. The ●■▲ mark opens the line like a signature.',
-    fn:bauhaus },
+    pitch:'Primary triad on charcoal. <b>Geometry encodes state</b>: a blue ● is calm, a yellow ■ is warming, a red ▲ is critical — you read the shapes before the numbers. The ●■▲ mark opens the line like a signature.' },
   { name:'Swiss', badge:['font-safe','safe'],
-    pitch:'Grid discipline, objective typography, and exactly <b>one red accent</b> — the period after the model name, and any meter that crosses 80%. Padded digits keep columns steady as values change. The most restrained of all twenty.',
-    fn:swiss },
+    pitch:'Grid discipline, objective typography, and exactly <b>one red accent</b> — the period after the model name, plus any meter past 80%. Warming meters go <b>bold, not colored</b>, and digits are padded so the columns never move. The most restrained of all twenty-seven.' },
   { name:'Wabi-sabi', badge:['font-safe','safe'],
-    pitch:'Moss, stone, and mist — <b>meters are moon phases</b>: ○ empty, ◔ waxing, ◐ half, ● full(rust). No percent signs anywhere; you glance at the moons like a calendar. The gentlest possible warning system.',
-    fn:wabi },
+    pitch:'Moss, stone, and mist — <b>meters are moon phases</b>: ○ empty, ◔ waxing, ◐ half, ● full(rust). No percent signs anywhere; you glance at the moons like a calendar. The gentlest possible warning system.' },
   { name:'Glassmorphic', badge:['round caps','font'],
-    pitch:'Frosted translucent panes floating over the dark, icy mint→rose meters. <b>The blur is preview-only</b> — in the terminal the panes become soft-tinted rounded capsules, which keeps the airy layered feel.',
-    fn:glass },
+    pitch:'Frosted panes floating over the dark, icy mint→rose meters. Real blur doesn\'t exist in a terminal — the panes are <b>soft-tinted rounded capsules</b> instead, which keeps the airy layered feel.' },
   { name:'Memphis', badge:['font-safe','safe'],
-    pitch:'1980s pop: clashing pink/teal/yellow/purple, <b>zigzag ▚ separators</b>, no two neighbors sharing a hue. Loud on purpose. Meters flip teal → yellow → hot-pink. The most fun to look at, the least quiet.',
-    fn:memphis },
+    pitch:'1980s pop: clashing <b>pink/teal/yellow/purple</b> confetti with <b>▚▞ zigzag separators</b> that cycle hues so every joint clashes on purpose. Meters flip teal → yellow → hot-pink and go bold at critical. The most fun to look at, the least quiet.' },
   { name:'Art Deco', badge:['font-safe','safe'],
-    pitch:'Champagne gold on charcoal with <b>fan ornaments ❯❯ ❮❮ framing the model</b> and long dash rules between facts. Uppercase smallwork, emerald→gold→ruby meters. Gatsby doing DevOps.',
-    fn:deco },
+    pitch:'Champagne gold on charcoal with <b>fan ornaments ❯❯ ❮❮ framing the model</b> and long dash rules between facts. Uppercase smallwork, emerald→gold→ruby meters. Gatsby doing DevOps.' },
   { name:'Nord', badge:['font-safe','safe'],
-    pitch:'The beloved arctic palette: frost cyan, snow, glacier blues. <b>Minimal punctuation, just breathing room</b> — the quietest colored option. Meters use Nord\'s own aurora green/yellow/red.',
-    fn:nord },
+    pitch:'The beloved arctic palette: frost cyan, snow, glacier blues. <b>Minimal punctuation, just breathing room</b> — the quietest colored option. Meters use Nord\'s own aurora green/yellow/red.' },
   { name:'Dracula', badge:['font-safe','safe'],
-    pitch:'The classic editor theme\'s exact palette — purple identity, pink branch, comment-blue labels, <b>∷ separators</b>. If your editor already runs Dracula, the status line joins the family seamlessly.',
-    fn:dracula },
+    pitch:'The classic editor theme\'s exact palette on its own #282A36 canvas — purple identity, pink branch, comment-blue labels, <b>:: separators</b> straight out of the syntax highlighting. Critical meters go bold as well as red. If your editor already runs Dracula, the status line joins the family seamlessly.' },
   { name:'Terminal Rain', badge:['font-safe','safe'],
-    pitch:'Matrix greens where <b>brightness is hierarchy</b> — the model glows brightest, labels sink into dark moss. Meters break the monochrome only to warn: acid-yellow, then hot orange. ⋮ separators like falling code.',
-    fn:matrix, panel:'neon' },
+    pitch:'Matrix greens where <b>brightness is hierarchy</b> — the model glows brightest, labels sink into dark moss. Meters break the monochrome only to warn: acid-yellow, then hot orange. ⋮ separators like falling code.' },
 
-  { group:'Game art styles', name:'Flat', badge:['blocks','font'],
-    pitch:'<b>Monument Valley</b>: soft pastel geometry — rose, sand, lavender, teal — laid flat with no outlines, no gradients, no noise. Serene even when warning: critical is a deeper dusty rose, never a scream.',
-    fn:flatMV },
-  { name:'Vector', badge:['round caps','font'],
-    pitch:'Pure <b>outlined shapes, zero fills</b> — like vector arcade art, the stroke is everything. Each stat is a wireframe capsule whose outline color carries its state: cyan calm → yellow warm → magenta critical.',
-    fn:vector },
+  { group:'Game art styles', name:'Flat', badge:['blocks','safe'],
+    pitch:'<b>Monument Valley</b>: soft pastel geometry — rose, sand, lavender, teal — laid flat with no outlines, no gradients, no noise. Every meter is its own tile that <b>shifts teal → peach → dusty rose</b>; serene even when warning, never a scream.' },
+  { name:'Vector', badge:['stroke caps','font'],
+    pitch:'Zero fills, all stroke — <b>vector arcade linework</b> floating on the dark. Every stat rides between bold angle caps ❬ ❭ drawn in its own state color: cyan calm → yellow warm → magenta critical. No backgrounds anywhere — the stroke color is the whole signal.' },
   { name:'Geometric Art', badge:['font-safe','safe'],
-    pitch:'<b>Geometry Wars</b>: neon particles on grid-dark. Every meter gets its own glowing glyph — ◇ △ ▽ — that shifts lime → orange → magenta as pressure builds. Faint grid-blue ┆ separators hold the lanes.',
-    fn:geoWars, panel:'neon' },
+    pitch:'<b>Geometry Wars</b>: neon particles for a dark terminal. Every meter flies its own geometric glyph — ◇ △ ▽ — shifting lime → orange → magenta and <b>filling solid</b> ◆ ▲ ▼ as pressure builds, bold at critical. Faint grid-blue ┆ separators hold the lanes.' },
   { name:'Pixel', badge:['font-safe','safe'],
-    pitch:'<b>Stardew Valley</b>: chunky ▓▒░ pixel bars in the farm palette — leaf green filling to wheat gold to berry red, cost as ⛁ coin. The wood-brown model tag reads like a crafting-menu label.',
-    fn:pixelSV },
+    pitch:'<b>Stardew Valley</b>: chunky ▓▒░ pixel bars in the farm palette — leaf green filling to wheat gold to berry red, cost as ⛁ coin. The wood-brown model tag reads like a crafting-menu label.' },
   { name:'Cartoon', badge:['round caps','font'],
-    pitch:'<b>Team Fortress 2</b>: RED vs BLU team colors on parchment cream, thick rounded chips. When context runs critical the gauge <b>switches teams to RED and gains a shout</b> — ctx 88% !',
-    fn:cartoon },
-  { name:'Cel Shading', badge:['blocks','font'],
-    pitch:'<b>Wind Waker</b>: bright flat sea-and-grass colors, each block wrapped in the <b>dark ink outline</b> that defines cel shading. Sail-red model, ocean directory, meters going grass → sunset → sail-red.',
-    fn:celWW },
+    pitch:'<b>Team Fortress 2</b>: RED vs BLU team colors on parchment cream, thick rounded chips. The context gauge <b>joins Mann-Co orange at 50%</b>, and when it runs critical it <b>switches teams to RED and gains a shout</b> — ctx 88% !' },
+  { name:'Cel Shading', badge:['blocks','safe'],
+    pitch:'<b>Wind Waker</b>: bright flat sea-and-grass panels divided by <b>dark ink seams</b> — the hand-drawn outline stroke that defines cel shading, one column wide between every panel and capping both ends. Sail-red model, ocean directory, and meters that shade grass and sand → sunset → sail-red as the pressure climbs.' },
   { name:'Monochromatic', badge:['font-safe','safe'],
-    pitch:'<b>Inside / Limbo</b>: grayscale fog where brightness is the only hierarchy — until something crosses 80%, when <b>the single red in the whole world</b> appears. The most cinematic warning of all 27.',
-    fn:monoInside },
+    pitch:'<b>Inside / Limbo</b>: grayscale fog where brightness is the only hierarchy — until something crosses 80%, when <b>the single red in the whole world</b> appears, in bold. The most cinematic warning of all 27.' },
 ];
+
+// PREVIEWS:BEGIN (generated by tools/build-gallery.js — do not hand-edit)
+const PREVIEWS = {
+ "1": {
+  "calm": "<span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(217,119,87)\"> </span><span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(217,119,87);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(217,119,87)\"> </span><span class=\"g arw\" style=\"background:rgb(46,42,42)\"><i style=\"background:rgb(217,119,87);clip-path:polygon(0 0,0 100%,100% 50%)\"></i></span><span class=\"r\" style=\"color:rgb(242,239,234);background:rgb(46,42,42)\"> directory </span><span class=\"g arw\" style=\"background:rgb(122,90,74)\"><i style=\"background:rgb(46,42,42);clip-path:polygon(0 0,0 100%,100% 50%)\"></i></span><span class=\"r\" style=\"color:rgb(242,239,234);background:rgb(122,90,74)\"> </span><span class=\"g br\" style=\"background:rgb(122,90,74)\"><svg viewBox=\"0 0 10 13\" style=\"display:block;width:100%;height:100%\"><g stroke=\"rgb(242,239,234)\" fill=\"none\" stroke-width=\"1.1\"><circle cx=\"2.7\" cy=\"2.8\" r=\"1.4\"/><circle cx=\"2.7\" cy=\"10.2\" r=\"1.4\"/><circle cx=\"7.3\" cy=\"4.4\" r=\"1.4\"/><path d=\"M2.7 4.2v4.6M7.3 5.8c0 2.6-4.6 1.9-4.6 4.4\"/></g></svg></span><span class=\"r\" style=\"color:rgb(242,239,234);background:rgb(122,90,74)\"> main </span><span class=\"g arw\" style=\"background:rgb(138,154,91)\"><i style=\"background:rgb(122,90,74);clip-path:polygon(0 0,0 100%,100% 50%)\"></i></span><span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(138,154,91)\"> ctx </span><span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(138,154,91);font-weight:700\">4%</span><span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(138,154,91)\"> </span><span class=\"g arw\" style=\"background:rgb(46,42,42)\"><i style=\"background:rgb(138,154,91);clip-path:polygon(0 0,0 100%,100% 50%)\"></i></span><span class=\"r\" style=\"color:rgb(138,154,91);background:rgb(46,42,42)\"> </span><span class=\"r\" style=\"color:rgb(168,158,150);background:rgb(46,42,42)\">5h </span><span class=\"r\" style=\"color:rgb(138,154,91);background:rgb(46,42,42)\">1%</span><span class=\"r\" style=\"color:rgb(168,158,150);background:rgb(46,42,42)\"> · </span><span class=\"r\" style=\"color:rgb(168,158,150);background:rgb(46,42,42)\">7d </span><span class=\"r\" style=\"color:rgb(138,154,91);background:rgb(46,42,42)\">0% </span><span class=\"g arw\" style=\"background:rgb(30,27,26)\"><i style=\"background:rgb(46,42,42);clip-path:polygon(0 0,0 100%,100% 50%)\"></i></span><span class=\"r\" style=\"color:rgb(168,158,150);background:rgb(30,27,26)\"> $0.23  00:02  </span><span class=\"r\" style=\"color:rgb(150,200,120);background:rgb(30,27,26)\">+0 </span><span class=\"r\" style=\"color:rgb(214,110,100);background:rgb(30,27,26)\">-0 </span><span class=\"g arw\" style=\"background:transparent\"><i style=\"background:rgb(30,27,26);clip-path:polygon(0 0,0 100%,100% 50%)\"></i></span>",
+  "hot": "<span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(217,119,87)\"> </span><span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(217,119,87);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(217,119,87)\"> </span><span class=\"g arw\" style=\"background:rgb(46,42,42)\"><i style=\"background:rgb(217,119,87);clip-path:polygon(0 0,0 100%,100% 50%)\"></i></span><span class=\"r\" style=\"color:rgb(242,239,234);background:rgb(46,42,42)\"> directory </span><span class=\"g arw\" style=\"background:rgb(122,90,74)\"><i style=\"background:rgb(46,42,42);clip-path:polygon(0 0,0 100%,100% 50%)\"></i></span><span class=\"r\" style=\"color:rgb(242,239,234);background:rgb(122,90,74)\"> </span><span class=\"g br\" style=\"background:rgb(122,90,74)\"><svg viewBox=\"0 0 10 13\" style=\"display:block;width:100%;height:100%\"><g stroke=\"rgb(242,239,234)\" fill=\"none\" stroke-width=\"1.1\"><circle cx=\"2.7\" cy=\"2.8\" r=\"1.4\"/><circle cx=\"2.7\" cy=\"10.2\" r=\"1.4\"/><circle cx=\"7.3\" cy=\"4.4\" r=\"1.4\"/><path d=\"M2.7 4.2v4.6M7.3 5.8c0 2.6-4.6 1.9-4.6 4.4\"/></g></svg></span><span class=\"r\" style=\"color:rgb(242,239,234);background:rgb(122,90,74)\"> release/1.2 </span><span class=\"g arw\" style=\"background:rgb(201,74,62)\"><i style=\"background:rgb(122,90,74);clip-path:polygon(0 0,0 100%,100% 50%)\"></i></span><span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(201,74,62)\"> ctx </span><span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(201,74,62);font-weight:700\">88%</span><span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(201,74,62)\"> </span><span class=\"g arw\" style=\"background:rgb(46,42,42)\"><i style=\"background:rgb(201,74,62);clip-path:polygon(0 0,0 100%,100% 50%)\"></i></span><span class=\"r\" style=\"color:rgb(201,74,62);background:rgb(46,42,42)\"> </span><span class=\"r\" style=\"color:rgb(168,158,150);background:rgb(46,42,42)\">5h </span><span class=\"r\" style=\"color:rgb(224,168,74);background:rgb(46,42,42)\">71%</span><span class=\"r\" style=\"color:rgb(168,158,150);background:rgb(46,42,42)\"> · </span><span class=\"r\" style=\"color:rgb(168,158,150);background:rgb(46,42,42)\">7d </span><span class=\"r\" style=\"color:rgb(201,74,62);background:rgb(46,42,42)\">92% </span><span class=\"g arw\" style=\"background:rgb(30,27,26)\"><i style=\"background:rgb(46,42,42);clip-path:polygon(0 0,0 100%,100% 50%)\"></i></span><span class=\"r\" style=\"color:rgb(168,158,150);background:rgb(30,27,26)\"> $3.10  00:47  </span><span class=\"r\" style=\"color:rgb(150,200,120);background:rgb(30,27,26)\">+612 </span><span class=\"r\" style=\"color:rgb(214,110,100);background:rgb(30,27,26)\">-208 </span><span class=\"g arw\" style=\"background:transparent\"><i style=\"background:rgb(30,27,26);clip-path:polygon(0 0,0 100%,100% 50%)\"></i></span>"
+ },
+ "2": {
+  "calm": "<span class=\"g cap\"><i style=\"background:rgb(181,168,255);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(181,168,255);background:rgb(181,168,255)\"> </span><span class=\"r\" style=\"color:rgb(24,22,38);background:rgb(181,168,255);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(24,22,38);background:rgb(181,168,255)\"> </span><span class=\"g cap\"><i style=\"background:rgb(181,168,255);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(181,168,255)\"> </span><span class=\"g cap\"><i style=\"background:rgb(52,50,74);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(52,50,74);background:rgb(52,50,74)\"> </span><span class=\"r\" style=\"color:rgb(232,230,245);background:rgb(52,50,74)\">directory </span><span class=\"g cap\"><i style=\"background:rgb(52,50,74);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(52,50,74)\"> </span><span class=\"g cap\"><i style=\"background:rgb(68,63,102);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(68,63,102);background:rgb(68,63,102)\"> </span><span class=\"g br\" style=\"background:rgb(68,63,102)\"><svg viewBox=\"0 0 10 13\" style=\"display:block;width:100%;height:100%\"><g stroke=\"rgb(181,168,255)\" fill=\"none\" stroke-width=\"1.1\"><circle cx=\"2.7\" cy=\"2.8\" r=\"1.4\"/><circle cx=\"2.7\" cy=\"10.2\" r=\"1.4\"/><circle cx=\"7.3\" cy=\"4.4\" r=\"1.4\"/><path d=\"M2.7 4.2v4.6M7.3 5.8c0 2.6-4.6 1.9-4.6 4.4\"/></g></svg></span><span class=\"r\" style=\"color:rgb(181,168,255);background:rgb(68,63,102)\"> main </span><span class=\"g cap\"><i style=\"background:rgb(68,63,102);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(68,63,102)\"> </span><span class=\"g cap\"><i style=\"background:rgb(36,35,54);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(36,35,54);background:rgb(36,35,54)\"> </span><span class=\"r\" style=\"color:rgb(127,209,174);background:rgb(36,35,54)\">ctx 4% </span><span class=\"g cap\"><i style=\"background:rgb(36,35,54);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(36,35,54)\"> </span><span class=\"g cap\"><i style=\"background:rgb(36,35,54);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(36,35,54);background:rgb(36,35,54)\"> </span><span class=\"r\" style=\"color:rgb(142,139,172);background:rgb(36,35,54)\">5h </span><span class=\"r\" style=\"color:rgb(127,209,174);background:rgb(36,35,54)\">1%  </span><span class=\"r\" style=\"color:rgb(142,139,172);background:rgb(36,35,54)\">7d </span><span class=\"r\" style=\"color:rgb(127,209,174);background:rgb(36,35,54)\">0% </span><span class=\"g cap\"><i style=\"background:rgb(36,35,54);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(36,35,54)\"> </span><span class=\"g cap\"><i style=\"background:rgb(36,35,54);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(36,35,54);background:rgb(36,35,54)\"> </span><span class=\"r\" style=\"color:rgb(142,139,172);background:rgb(36,35,54)\">$0.23  00:02  </span><span class=\"r\" style=\"color:rgb(127,209,174);background:rgb(36,35,54)\">+0 </span><span class=\"r\" style=\"color:rgb(240,121,138);background:rgb(36,35,54)\">-0 </span><span class=\"g cap\"><i style=\"background:rgb(36,35,54);border-radius:0 999px 999px 0\"></i></span>",
+  "hot": "<span class=\"g cap\"><i style=\"background:rgb(181,168,255);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(181,168,255);background:rgb(181,168,255)\"> </span><span class=\"r\" style=\"color:rgb(24,22,38);background:rgb(181,168,255);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(24,22,38);background:rgb(181,168,255)\"> </span><span class=\"g cap\"><i style=\"background:rgb(181,168,255);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(181,168,255)\"> </span><span class=\"g cap\"><i style=\"background:rgb(52,50,74);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(52,50,74);background:rgb(52,50,74)\"> </span><span class=\"r\" style=\"color:rgb(232,230,245);background:rgb(52,50,74)\">directory </span><span class=\"g cap\"><i style=\"background:rgb(52,50,74);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(52,50,74)\"> </span><span class=\"g cap\"><i style=\"background:rgb(68,63,102);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(68,63,102);background:rgb(68,63,102)\"> </span><span class=\"g br\" style=\"background:rgb(68,63,102)\"><svg viewBox=\"0 0 10 13\" style=\"display:block;width:100%;height:100%\"><g stroke=\"rgb(181,168,255)\" fill=\"none\" stroke-width=\"1.1\"><circle cx=\"2.7\" cy=\"2.8\" r=\"1.4\"/><circle cx=\"2.7\" cy=\"10.2\" r=\"1.4\"/><circle cx=\"7.3\" cy=\"4.4\" r=\"1.4\"/><path d=\"M2.7 4.2v4.6M7.3 5.8c0 2.6-4.6 1.9-4.6 4.4\"/></g></svg></span><span class=\"r\" style=\"color:rgb(181,168,255);background:rgb(68,63,102)\"> release/1.2 </span><span class=\"g cap\"><i style=\"background:rgb(68,63,102);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(68,63,102)\"> </span><span class=\"g cap\"><i style=\"background:rgb(36,35,54);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(36,35,54);background:rgb(36,35,54)\"> </span><span class=\"r\" style=\"color:rgb(240,121,138);background:rgb(36,35,54)\">ctx </span><span class=\"r\" style=\"color:rgb(240,121,138);background:rgb(36,35,54);font-weight:700\">88%</span><span class=\"r\" style=\"color:rgb(240,121,138);background:rgb(36,35,54)\"> </span><span class=\"g cap\"><i style=\"background:rgb(36,35,54);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(36,35,54)\"> </span><span class=\"g cap\"><i style=\"background:rgb(36,35,54);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(36,35,54);background:rgb(36,35,54)\"> </span><span class=\"r\" style=\"color:rgb(142,139,172);background:rgb(36,35,54)\">5h </span><span class=\"r\" style=\"color:rgb(240,195,106);background:rgb(36,35,54)\">71%  </span><span class=\"r\" style=\"color:rgb(142,139,172);background:rgb(36,35,54)\">7d </span><span class=\"r\" style=\"color:rgb(240,121,138);background:rgb(36,35,54)\">92% </span><span class=\"g cap\"><i style=\"background:rgb(36,35,54);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(36,35,54)\"> </span><span class=\"g cap\"><i style=\"background:rgb(36,35,54);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(36,35,54);background:rgb(36,35,54)\"> </span><span class=\"r\" style=\"color:rgb(142,139,172);background:rgb(36,35,54)\">$3.10  00:47  </span><span class=\"r\" style=\"color:rgb(127,209,174);background:rgb(36,35,54)\">+612 </span><span class=\"r\" style=\"color:rgb(240,121,138);background:rgb(36,35,54)\">-208 </span><span class=\"g cap\"><i style=\"background:rgb(36,35,54);border-radius:0 999px 999px 0\"></i></span>"
+ },
+ "3": {
+  "calm": "<span class=\"r\" style=\"color:rgb(217,119,87);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(217,119,87)\">  </span><span class=\"r\" style=\"color:rgb(74,67,61)\">│  </span><span class=\"r\" style=\"color:rgb(220,214,204)\">directory  </span><span class=\"r\" style=\"color:rgb(74,67,61)\">│  </span><span class=\"r\" style=\"color:rgb(198,154,84)\">▸ main  </span><span class=\"r\" style=\"color:rgb(74,67,61)\">│  </span><span class=\"r\" style=\"color:rgb(138,154,91)\">ctx 4%  </span><span class=\"r\" style=\"color:rgb(74,67,61)\">│  </span><span class=\"r\" style=\"color:rgb(168,158,150)\">5h </span><span class=\"r\" style=\"color:rgb(138,154,91)\">1%</span><span class=\"r\" style=\"color:rgb(106,98,90)\"> · </span><span class=\"r\" style=\"color:rgb(168,158,150)\">7d </span><span class=\"r\" style=\"color:rgb(138,154,91)\">0%  </span><span class=\"r\" style=\"color:rgb(74,67,61)\">│  </span><span class=\"r\" style=\"color:rgb(124,115,106)\">$0.23  00:02  +0 -0</span>",
+  "hot": "<span class=\"r\" style=\"color:rgb(217,119,87);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(217,119,87)\">  </span><span class=\"r\" style=\"color:rgb(74,67,61)\">│  </span><span class=\"r\" style=\"color:rgb(220,214,204)\">directory  </span><span class=\"r\" style=\"color:rgb(74,67,61)\">│  </span><span class=\"r\" style=\"color:rgb(198,154,84)\">▸ release/1.2  </span><span class=\"r\" style=\"color:rgb(74,67,61)\">│  </span><span class=\"r\" style=\"color:rgb(201,74,62)\">ctx </span><span class=\"r\" style=\"color:rgb(201,74,62);font-weight:700\">88%</span><span class=\"r\" style=\"color:rgb(201,74,62)\">  </span><span class=\"r\" style=\"color:rgb(74,67,61)\">│  </span><span class=\"r\" style=\"color:rgb(168,158,150)\">5h </span><span class=\"r\" style=\"color:rgb(224,168,74)\">71%</span><span class=\"r\" style=\"color:rgb(106,98,90)\"> · </span><span class=\"r\" style=\"color:rgb(168,158,150)\">7d </span><span class=\"r\" style=\"color:rgb(201,74,62);font-weight:700\">92%</span><span class=\"r\" style=\"color:rgb(201,74,62)\">  </span><span class=\"r\" style=\"color:rgb(74,67,61)\">│  </span><span class=\"r\" style=\"color:rgb(124,115,106)\">$3.10  00:47  +612 -208</span>"
+ },
+ "4": {
+  "calm": "<span class=\"r\" style=\"color:rgb(217,119,87);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(217,119,87)\"> </span><span class=\"r\" style=\"color:rgb(242,239,234)\">directory </span><span class=\"r\" style=\"color:rgb(122,90,74)\">▸main   </span><span class=\"r\" style=\"color:rgb(168,158,150)\">ctx </span><span class=\"r\" style=\"color:rgb(91,84,76)\">▕</span><span class=\"r\" style=\"color:rgb(138,154,91);background:rgb(58,52,46)\">▍</span><span class=\"r\" style=\"color:rgb(58,52,46)\">███████</span><span class=\"r\" style=\"color:rgb(91,84,76)\">▏ </span><span class=\"r\" style=\"color:rgb(138,154,91)\">4%   </span><span class=\"r\" style=\"color:rgb(168,158,150)\">5h </span><span class=\"r\" style=\"color:rgb(91,84,76)\">▕</span><span class=\"r\" style=\"color:rgb(138,154,91);background:rgb(58,52,46)\">▏</span><span class=\"r\" style=\"color:rgb(58,52,46)\">███</span><span class=\"r\" style=\"color:rgb(91,84,76)\">▏ </span><span class=\"r\" style=\"color:rgb(138,154,91)\">1%   </span><span class=\"r\" style=\"color:rgb(168,158,150)\">7d </span><span class=\"r\" style=\"color:rgb(91,84,76)\">▕</span><span class=\"r\" style=\"color:rgb(58,52,46)\">████</span><span class=\"r\" style=\"color:rgb(91,84,76)\">▏ </span><span class=\"r\" style=\"color:rgb(138,154,91)\">0%   </span><span class=\"r\" style=\"color:rgb(124,115,106)\">$0.23  00:02  </span><span class=\"r\" style=\"color:rgb(150,200,120)\">+0 </span><span class=\"r\" style=\"color:rgb(214,110,100)\">-0</span>",
+  "hot": "<span class=\"r\" style=\"color:rgb(217,119,87);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(217,119,87)\"> </span><span class=\"r\" style=\"color:rgb(242,239,234)\">directory </span><span class=\"r\" style=\"color:rgb(122,90,74)\">▸release/1.2   </span><span class=\"r\" style=\"color:rgb(168,158,150)\">ctx </span><span class=\"r\" style=\"color:rgb(91,84,76)\">▕</span><span class=\"r\" style=\"color:rgb(201,74,62)\">███████</span><span class=\"r\" style=\"color:rgb(58,52,46)\">█</span><span class=\"r\" style=\"color:rgb(91,84,76)\">▏ </span><span class=\"r\" style=\"color:rgb(201,74,62);font-weight:700\">88%</span><span class=\"r\" style=\"color:rgb(201,74,62)\">   </span><span class=\"r\" style=\"color:rgb(168,158,150)\">5h </span><span class=\"r\" style=\"color:rgb(91,84,76)\">▕</span><span class=\"r\" style=\"color:rgb(224,168,74)\">██</span><span class=\"r\" style=\"color:rgb(224,168,74);background:rgb(58,52,46)\">▉</span><span class=\"r\" style=\"color:rgb(58,52,46)\">█</span><span class=\"r\" style=\"color:rgb(91,84,76)\">▏ </span><span class=\"r\" style=\"color:rgb(224,168,74)\">71%   </span><span class=\"r\" style=\"color:rgb(168,158,150)\">7d </span><span class=\"r\" style=\"color:rgb(91,84,76)\">▕</span><span class=\"r\" style=\"color:rgb(201,74,62)\">███</span><span class=\"r\" style=\"color:rgb(201,74,62);background:rgb(58,52,46)\">▋</span><span class=\"r\" style=\"color:rgb(91,84,76)\">▏ </span><span class=\"r\" style=\"color:rgb(201,74,62);font-weight:700\">92%</span><span class=\"r\" style=\"color:rgb(201,74,62)\">   </span><span class=\"r\" style=\"color:rgb(124,115,106)\">$3.10  00:47  </span><span class=\"r\" style=\"color:rgb(150,200,120)\">+612 </span><span class=\"r\" style=\"color:rgb(214,110,100)\">-208</span>"
+ },
+ "5": {
+  "calm": "<span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(217,119,87)\"> </span><span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(217,119,87);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(217,119,87)\"> </span><span class=\"r\" style=\"color:rgb(242,239,234);background:rgb(64,58,52)\"> directory </span><span class=\"r\" style=\"color:rgb(242,239,234);background:rgb(122,90,74)\"> ▸ main </span><span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(138,154,91)\"> ctx 4% </span><span class=\"r\" style=\"background:rgb(42,38,34)\"> </span><span class=\"r\" style=\"color:rgb(168,158,150);background:rgb(42,38,34)\">5h </span><span class=\"r\" style=\"color:rgb(138,154,91);background:rgb(42,38,34)\">1% </span><span class=\"r\" style=\"color:rgb(168,158,150);background:rgb(42,38,34)\">7d </span><span class=\"r\" style=\"color:rgb(138,154,91);background:rgb(42,38,34)\">0% </span><span class=\"r\" style=\"color:rgb(168,158,150);background:rgb(30,27,26)\"> $0.23 00:02 </span><span class=\"r\" style=\"color:rgb(150,200,120);background:rgb(30,27,26)\">+0 </span><span class=\"r\" style=\"color:rgb(214,110,100);background:rgb(30,27,26)\">-0 </span>",
+  "hot": "<span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(217,119,87)\"> </span><span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(217,119,87);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(217,119,87)\"> </span><span class=\"r\" style=\"color:rgb(242,239,234);background:rgb(64,58,52)\"> directory </span><span class=\"r\" style=\"color:rgb(242,239,234);background:rgb(122,90,74)\"> ▸ release/1.2 </span><span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(201,74,62)\"> ctx </span><span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(201,74,62);font-weight:700\">88%</span><span class=\"r\" style=\"color:rgb(30,27,26);background:rgb(201,74,62)\"> </span><span class=\"r\" style=\"background:rgb(42,38,34)\"> </span><span class=\"r\" style=\"color:rgb(168,158,150);background:rgb(42,38,34)\">5h </span><span class=\"r\" style=\"color:rgb(224,168,74);background:rgb(42,38,34)\">71% </span><span class=\"r\" style=\"color:rgb(168,158,150);background:rgb(42,38,34)\">7d </span><span class=\"r\" style=\"color:rgb(201,74,62);background:rgb(42,38,34)\">92% </span><span class=\"r\" style=\"color:rgb(168,158,150);background:rgb(30,27,26)\"> $3.10 00:47 </span><span class=\"r\" style=\"color:rgb(150,200,120);background:rgb(30,27,26)\">+612 </span><span class=\"r\" style=\"color:rgb(214,110,100);background:rgb(30,27,26)\">-208 </span>"
+ },
+ "6": {
+  "calm": "<span class=\"g cap\"><i style=\"background:rgb(224,144,110);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(224,144,110);background:rgb(224,144,110)\"> </span><span class=\"r\" style=\"color:rgb(74,58,46);background:rgb(224,144,110);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(74,58,46);background:rgb(224,144,110)\"> </span><span class=\"g cap\"><i style=\"background:rgb(224,144,110);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(224,144,110)\"> </span><span class=\"g cap\"><i style=\"background:rgb(231,211,172);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(231,211,172);background:rgb(231,211,172)\"> </span><span class=\"r\" style=\"color:rgb(74,58,46);background:rgb(231,211,172)\">directory </span><span class=\"g cap\"><i style=\"background:rgb(231,211,172);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(231,211,172)\"> </span><span class=\"g cap\"><i style=\"background:rgb(190,154,117);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(190,154,117);background:rgb(190,154,117)\"> </span><span class=\"g br\" style=\"background:rgb(190,154,117)\"><svg viewBox=\"0 0 10 13\" style=\"display:block;width:100%;height:100%\"><g stroke=\"rgb(251,243,230)\" fill=\"none\" stroke-width=\"1.1\"><circle cx=\"2.7\" cy=\"2.8\" r=\"1.4\"/><circle cx=\"2.7\" cy=\"10.2\" r=\"1.4\"/><circle cx=\"7.3\" cy=\"4.4\" r=\"1.4\"/><path d=\"M2.7 4.2v4.6M7.3 5.8c0 2.6-4.6 1.9-4.6 4.4\"/></g></svg></span><span class=\"r\" style=\"color:rgb(251,243,230);background:rgb(190,154,117)\"> main </span><span class=\"g cap\"><i style=\"background:rgb(190,154,117);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(190,154,117)\"> </span><span class=\"g cap\"><i style=\"background:rgb(174,197,140);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(174,197,140);background:rgb(174,197,140)\"> </span><span class=\"r\" style=\"color:rgb(74,58,46);background:rgb(174,197,140)\">ctx 4% </span><span class=\"g cap\"><i style=\"background:rgb(174,197,140);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(174,197,140)\"> </span><span class=\"g cap\"><i style=\"background:rgb(231,211,172);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(231,211,172);background:rgb(231,211,172)\"> </span><span class=\"r\" style=\"color:rgb(156,139,120);background:rgb(231,211,172)\">5h </span><span class=\"r\" style=\"color:rgb(174,197,140);background:rgb(231,211,172)\">1%  </span><span class=\"r\" style=\"color:rgb(156,139,120);background:rgb(231,211,172)\">7d </span><span class=\"r\" style=\"color:rgb(174,197,140);background:rgb(231,211,172)\">0% </span><span class=\"g cap\"><i style=\"background:rgb(231,211,172);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(231,211,172)\"> </span><span class=\"g cap\"><i style=\"background:rgb(190,154,117);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(190,154,117);background:rgb(190,154,117)\"> </span><span class=\"r\" style=\"color:rgb(251,243,230);background:rgb(190,154,117)\">$0.23 · 00:02 · </span><span class=\"r\" style=\"color:rgb(216,232,192);background:rgb(190,154,117)\">+0 </span><span class=\"r\" style=\"color:rgb(248,208,192);background:rgb(190,154,117)\">-0 </span><span class=\"g cap\"><i style=\"background:rgb(190,154,117);border-radius:0 999px 999px 0\"></i></span>",
+  "hot": "<span class=\"g cap\"><i style=\"background:rgb(224,144,110);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(224,144,110);background:rgb(224,144,110)\"> </span><span class=\"r\" style=\"color:rgb(74,58,46);background:rgb(224,144,110);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(74,58,46);background:rgb(224,144,110)\"> </span><span class=\"g cap\"><i style=\"background:rgb(224,144,110);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(224,144,110)\"> </span><span class=\"g cap\"><i style=\"background:rgb(231,211,172);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(231,211,172);background:rgb(231,211,172)\"> </span><span class=\"r\" style=\"color:rgb(74,58,46);background:rgb(231,211,172)\">directory </span><span class=\"g cap\"><i style=\"background:rgb(231,211,172);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(231,211,172)\"> </span><span class=\"g cap\"><i style=\"background:rgb(190,154,117);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(190,154,117);background:rgb(190,154,117)\"> </span><span class=\"g br\" style=\"background:rgb(190,154,117)\"><svg viewBox=\"0 0 10 13\" style=\"display:block;width:100%;height:100%\"><g stroke=\"rgb(251,243,230)\" fill=\"none\" stroke-width=\"1.1\"><circle cx=\"2.7\" cy=\"2.8\" r=\"1.4\"/><circle cx=\"2.7\" cy=\"10.2\" r=\"1.4\"/><circle cx=\"7.3\" cy=\"4.4\" r=\"1.4\"/><path d=\"M2.7 4.2v4.6M7.3 5.8c0 2.6-4.6 1.9-4.6 4.4\"/></g></svg></span><span class=\"r\" style=\"color:rgb(251,243,230);background:rgb(190,154,117)\"> release/1.2 </span><span class=\"g cap\"><i style=\"background:rgb(190,154,117);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(190,154,117)\"> </span><span class=\"g cap\"><i style=\"background:rgb(222,123,99);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(222,123,99);background:rgb(222,123,99)\"> </span><span class=\"r\" style=\"color:rgb(74,58,46);background:rgb(222,123,99)\">ctx 88% </span><span class=\"g cap\"><i style=\"background:rgb(222,123,99);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(222,123,99)\"> </span><span class=\"g cap\"><i style=\"background:rgb(231,211,172);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(231,211,172);background:rgb(231,211,172)\"> </span><span class=\"r\" style=\"color:rgb(156,139,120);background:rgb(231,211,172)\">5h </span><span class=\"r\" style=\"color:rgb(230,178,76);background:rgb(231,211,172)\">71%  </span><span class=\"r\" style=\"color:rgb(156,139,120);background:rgb(231,211,172)\">7d </span><span class=\"r\" style=\"color:rgb(222,123,99);background:rgb(231,211,172)\">92% </span><span class=\"g cap\"><i style=\"background:rgb(231,211,172);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(231,211,172)\"> </span><span class=\"g cap\"><i style=\"background:rgb(190,154,117);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(190,154,117);background:rgb(190,154,117)\"> </span><span class=\"r\" style=\"color:rgb(251,243,230);background:rgb(190,154,117)\">$3.10 · 00:47 · </span><span class=\"r\" style=\"color:rgb(216,232,192);background:rgb(190,154,117)\">+612 </span><span class=\"r\" style=\"color:rgb(248,208,192);background:rgb(190,154,117)\">-208 </span><span class=\"g cap\"><i style=\"background:rgb(190,154,117);border-radius:0 999px 999px 0\"></i></span>"
+ },
+ "7": {
+  "calm": "<span class=\"r\" style=\"color:rgb(240,195,106)\">★ </span><span class=\"r\" style=\"color:rgb(242,239,234);font-weight:700\">O4.8</span><span class=\"r\" style=\"color:rgb(242,239,234)\">   </span><span class=\"r\" style=\"color:rgb(143,176,214)\">▸ </span><span class=\"r\" style=\"color:rgb(242,239,234)\">directory   </span><span class=\"r\" style=\"color:rgb(198,154,84)\">⑂ main   </span><span class=\"r\" style=\"color:rgb(138,154,91)\">❤ </span><span class=\"r\" style=\"color:rgb(138,154,91)\">▰</span><span class=\"r\" style=\"color:rgb(58,52,46)\">▱▱▱▱▱ </span><span class=\"r\" style=\"color:rgb(138,154,91)\">4%   </span><span class=\"r\" style=\"color:rgb(240,195,106)\">⚡ </span><span class=\"r\" style=\"color:rgb(168,158,150)\">5h </span><span class=\"r\" style=\"color:rgb(138,154,91)\">▰</span><span class=\"r\" style=\"color:rgb(58,52,46)\">▱▱▱ </span><span class=\"r\" style=\"color:rgb(138,154,91)\">1%  </span><span class=\"r\" style=\"color:rgb(168,158,150)\">7d </span><span class=\"r\" style=\"color:rgb(58,52,46)\">▱▱▱▱ </span><span class=\"r\" style=\"color:rgb(138,154,91)\">0%   </span><span class=\"r\" style=\"color:rgb(231,193,90)\">◈ </span><span class=\"r\" style=\"color:rgb(168,158,150)\">$0.23 00:02 </span><span class=\"r\" style=\"color:rgb(150,200,120)\">+0 </span><span class=\"r\" style=\"color:rgb(214,110,100)\">-0</span>",
+  "hot": "<span class=\"r\" style=\"color:rgb(240,195,106)\">★ </span><span class=\"r\" style=\"color:rgb(242,239,234);font-weight:700\">O4.8</span><span class=\"r\" style=\"color:rgb(242,239,234)\">   </span><span class=\"r\" style=\"color:rgb(143,176,214)\">▸ </span><span class=\"r\" style=\"color:rgb(242,239,234)\">directory   </span><span class=\"r\" style=\"color:rgb(198,154,84)\">⑂ release/1.2   </span><span class=\"r\" style=\"color:rgb(201,74,62)\">❤ </span><span class=\"r\" style=\"color:rgb(201,74,62)\">▰▰▰▰▰</span><span class=\"r\" style=\"color:rgb(58,52,46)\">▱ </span><span class=\"r\" style=\"color:rgb(201,74,62);font-weight:700\">88%</span><span class=\"r\" style=\"color:rgb(201,74,62)\">   </span><span class=\"r\" style=\"color:rgb(240,195,106)\">⚡ </span><span class=\"r\" style=\"color:rgb(168,158,150)\">5h </span><span class=\"r\" style=\"color:rgb(224,168,74)\">▰▰▰</span><span class=\"r\" style=\"color:rgb(58,52,46)\">▱ </span><span class=\"r\" style=\"color:rgb(224,168,74)\">71%  </span><span class=\"r\" style=\"color:rgb(168,158,150)\">7d </span><span class=\"r\" style=\"color:rgb(201,74,62)\">▰▰▰▰</span><span class=\"r\" style=\"color:rgb(58,52,46)\"> </span><span class=\"r\" style=\"color:rgb(201,74,62);font-weight:700\">92%</span><span class=\"r\" style=\"color:rgb(201,74,62)\">   </span><span class=\"r\" style=\"color:rgb(231,193,90)\">◈ </span><span class=\"r\" style=\"color:rgb(168,158,150)\">$3.10 00:47 </span><span class=\"r\" style=\"color:rgb(150,200,120)\">+612 </span><span class=\"r\" style=\"color:rgb(214,110,100)\">-208</span>"
+ },
+ "8": {
+  "calm": "<span class=\"r\" style=\"color:rgb(217,119,87);font-weight:700\">◆ </span><span class=\"r\" style=\"color:rgb(218,124,86);font-weight:700\">O</span><span class=\"r\" style=\"color:rgb(218,126,85);font-weight:700\">4</span><span class=\"r\" style=\"color:rgb(218,129,84);font-weight:700\">.</span><span class=\"r\" style=\"color:rgb(219,131,84);font-weight:700\">8</span><span class=\"r\" style=\"color:rgb(219,131,84)\">  </span><span class=\"r\" style=\"color:rgb(220,139,82)\">›  </span><span class=\"r\" style=\"color:rgb(221,146,80)\">d</span><span class=\"r\" style=\"color:rgb(221,149,79)\">i</span><span class=\"r\" style=\"color:rgb(222,151,78)\">r</span><span class=\"r\" style=\"color:rgb(222,154,78)\">e</span><span class=\"r\" style=\"color:rgb(222,156,77)\">c</span><span class=\"r\" style=\"color:rgb(223,159,76)\">t</span><span class=\"r\" style=\"color:rgb(223,161,76)\">o</span><span class=\"r\" style=\"color:rgb(223,164,75)\">r</span><span class=\"r\" style=\"color:rgb(224,166,74)\">y  </span><span class=\"r\" style=\"color:rgb(214,166,76)\">›  </span><span class=\"r\" style=\"color:rgb(201,164,79)\">m</span><span class=\"r\" style=\"color:rgb(197,164,79)\">a</span><span class=\"r\" style=\"color:rgb(192,163,80)\">i</span><span class=\"r\" style=\"color:rgb(188,162,81)\">n  </span><span class=\"r\" style=\"color:rgb(175,160,84)\">›  </span><span class=\"r\" style=\"color:rgb(162,158,86)\">c</span><span class=\"r\" style=\"color:rgb(158,157,87)\">t</span><span class=\"r\" style=\"color:rgb(153,156,88)\">x </span><span class=\"r\" style=\"color:rgb(145,155,90)\">4</span><span class=\"r\" style=\"color:rgb(140,154,91)\">%  </span><span class=\"r\" style=\"color:rgb(132,157,104)\">›  </span><span class=\"r\" style=\"color:rgb(125,160,119)\">5</span><span class=\"r\" style=\"color:rgb(122,161,124)\">h </span><span class=\"r\" style=\"color:rgb(117,163,134)\">1</span><span class=\"r\" style=\"color:rgb(115,165,140)\">% </span><span class=\"r\" style=\"color:rgb(110,167,150)\">· </span><span class=\"r\" style=\"color:rgb(105,169,160)\">7</span><span class=\"r\" style=\"color:rgb(103,170,165)\">d </span><span class=\"r\" style=\"color:rgb(98,172,175)\">0</span><span class=\"r\" style=\"color:rgb(95,173,180)\">%  </span><span class=\"r\" style=\"color:rgb(92,174,193)\">›  </span><span class=\"r\" style=\"color:rgb(102,166,198)\">$</span><span class=\"r\" style=\"color:rgb(106,163,200)\">0</span><span class=\"r\" style=\"color:rgb(109,161,201)\">.</span><span class=\"r\" style=\"color:rgb(112,158,203)\">2</span><span class=\"r\" style=\"color:rgb(116,155,205)\">3 </span><span class=\"r\" style=\"color:rgb(122,150,208)\">0</span><span class=\"r\" style=\"color:rgb(125,147,209)\">0</span><span class=\"r\" style=\"color:rgb(129,144,211)\">:</span><span class=\"r\" style=\"color:rgb(132,142,213)\">0</span><span class=\"r\" style=\"color:rgb(135,139,214)\">2 </span><span class=\"r\" style=\"color:rgb(142,134,218)\">+</span><span class=\"r\" style=\"color:rgb(145,131,219)\">0 </span><span class=\"r\" style=\"color:rgb(152,126,222)\">-</span><span class=\"r\" style=\"color:rgb(155,123,224)\">0</span>",
+  "hot": "<span class=\"r\" style=\"color:rgb(217,119,87);font-weight:700\">◆ </span><span class=\"r\" style=\"color:rgb(218,123,86);font-weight:700\">O</span><span class=\"r\" style=\"color:rgb(218,125,85);font-weight:700\">4</span><span class=\"r\" style=\"color:rgb(218,127,85);font-weight:700\">.</span><span class=\"r\" style=\"color:rgb(219,130,84);font-weight:700\">8</span><span class=\"r\" style=\"color:rgb(219,130,84)\">  </span><span class=\"r\" style=\"color:rgb(219,136,83)\">›  </span><span class=\"r\" style=\"color:rgb(220,142,81)\">d</span><span class=\"r\" style=\"color:rgb(221,144,80)\">i</span><span class=\"r\" style=\"color:rgb(221,146,80)\">r</span><span class=\"r\" style=\"color:rgb(221,149,79)\">e</span><span class=\"r\" style=\"color:rgb(222,151,79)\">c</span><span class=\"r\" style=\"color:rgb(222,153,78)\">t</span><span class=\"r\" style=\"color:rgb(222,155,77)\">o</span><span class=\"r\" style=\"color:rgb(222,157,77)\">r</span><span class=\"r\" style=\"color:rgb(223,159,76)\">y  </span><span class=\"r\" style=\"color:rgb(224,165,75)\">›  </span><span class=\"r\" style=\"color:rgb(218,167,75)\">r</span><span class=\"r\" style=\"color:rgb(214,166,76)\">e</span><span class=\"r\" style=\"color:rgb(210,166,77)\">l</span><span class=\"r\" style=\"color:rgb(206,165,77)\">e</span><span class=\"r\" style=\"color:rgb(203,165,78)\">a</span><span class=\"r\" style=\"color:rgb(199,164,79)\">s</span><span class=\"r\" style=\"color:rgb(195,163,80)\">e</span><span class=\"r\" style=\"color:rgb(192,163,80)\">/</span><span class=\"r\" style=\"color:rgb(188,162,81)\">1</span><span class=\"r\" style=\"color:rgb(184,162,82)\">.</span><span class=\"r\" style=\"color:rgb(181,161,83)\">2  </span><span class=\"r\" style=\"color:rgb(169,159,85)\">›  </span><span class=\"r\" style=\"color:rgb(158,157,87);background:rgb(69,23,17);font-weight:700\">c</span><span class=\"r\" style=\"color:rgb(155,157,88);background:rgb(69,23,17);font-weight:700\">t</span><span class=\"r\" style=\"color:rgb(151,156,88);background:rgb(69,23,17);font-weight:700\">x </span><span class=\"r\" style=\"color:rgb(144,155,90);background:rgb(69,23,17);font-weight:700\">8</span><span class=\"r\" style=\"color:rgb(140,154,91);background:rgb(69,23,17);font-weight:700\">8</span><span class=\"r\" style=\"color:rgb(137,154,93);background:rgb(69,23,17);font-weight:700\">%</span><span class=\"r\" style=\"color:rgb(137,154,93)\">  </span><span class=\"r\" style=\"color:rgb(131,157,106)\">›  </span><span class=\"r\" style=\"color:rgb(125,160,119);background:rgb(58,43,16)\">5</span><span class=\"r\" style=\"color:rgb(123,161,124);background:rgb(58,43,16)\">h </span><span class=\"r\" style=\"color:rgb(118,163,132);background:rgb(58,43,16)\">7</span><span class=\"r\" style=\"color:rgb(116,164,137);background:rgb(58,43,16)\">1</span><span class=\"r\" style=\"color:rgb(114,165,141);background:rgb(58,43,16)\">%</span><span class=\"r\" style=\"color:rgb(114,165,141)\"> </span><span class=\"r\" style=\"color:rgb(110,167,150)\">· </span><span class=\"r\" style=\"color:rgb(106,169,158);background:rgb(69,23,17);font-weight:700\">7</span><span class=\"r\" style=\"color:rgb(104,170,163);background:rgb(69,23,17);font-weight:700\">d </span><span class=\"r\" style=\"color:rgb(100,172,171);background:rgb(69,23,17);font-weight:700\">9</span><span class=\"r\" style=\"color:rgb(98,172,176);background:rgb(69,23,17);font-weight:700\">2</span><span class=\"r\" style=\"color:rgb(96,173,180);background:rgb(69,23,17);font-weight:700\">%</span><span class=\"r\" style=\"color:rgb(96,173,180)\">  </span><span class=\"r\" style=\"color:rgb(91,175,192)\">›  </span><span class=\"r\" style=\"color:rgb(99,169,196)\">$</span><span class=\"r\" style=\"color:rgb(102,166,198)\">3</span><span class=\"r\" style=\"color:rgb(105,164,199)\">.</span><span class=\"r\" style=\"color:rgb(107,162,201)\">1</span><span class=\"r\" style=\"color:rgb(110,159,202)\">0 </span><span class=\"r\" style=\"color:rgb(116,155,205)\">0</span><span class=\"r\" style=\"color:rgb(119,153,206)\">0</span><span class=\"r\" style=\"color:rgb(121,150,207)\">:</span><span class=\"r\" style=\"color:rgb(124,148,209)\">4</span><span class=\"r\" style=\"color:rgb(127,146,210)\">7 </span><span class=\"r\" style=\"color:rgb(133,141,213)\">+</span><span class=\"r\" style=\"color:rgb(135,139,214)\">6</span><span class=\"r\" style=\"color:rgb(138,137,216)\">1</span><span class=\"r\" style=\"color:rgb(141,134,217)\">2 </span><span class=\"r\" style=\"color:rgb(147,130,220)\">-</span><span class=\"r\" style=\"color:rgb(149,128,221)\">2</span><span class=\"r\" style=\"color:rgb(152,125,223)\">0</span><span class=\"r\" style=\"color:rgb(155,123,224)\">8</span>"
+ },
+ "9": {
+  "calm": "<span class=\"r\" style=\"color:rgb(61,240,230);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(61,240,230)\">  </span><span class=\"r\" style=\"color:rgb(255,95,210)\">▸  </span><span class=\"r\" style=\"color:rgb(180,139,255)\">directory  </span><span class=\"r\" style=\"color:rgb(255,95,210)\">▸  </span><span class=\"r\" style=\"color:rgb(255,95,210)\">main  </span><span class=\"r\" style=\"color:rgb(255,95,210)\">▸  </span><span class=\"r\" style=\"color:rgb(61,240,230)\">ctx 4%  </span><span class=\"r\" style=\"color:rgb(255,95,210)\">▸  </span><span class=\"r\" style=\"color:rgb(90,106,138)\">5h </span><span class=\"r\" style=\"color:rgb(61,240,230)\">1%</span><span class=\"r\" style=\"color:rgb(90,106,138)\"> · </span><span class=\"r\" style=\"color:rgb(90,106,138)\">7d </span><span class=\"r\" style=\"color:rgb(61,240,230)\">0%  </span><span class=\"r\" style=\"color:rgb(255,95,210)\">▸  </span><span class=\"r\" style=\"color:rgb(90,106,138)\">$0.23  00:02  </span><span class=\"r\" style=\"color:rgb(61,240,230)\">+0 </span><span class=\"r\" style=\"color:rgb(255,77,109)\">-0</span>",
+  "hot": "<span class=\"r\" style=\"color:rgb(61,240,230);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(61,240,230)\">  </span><span class=\"r\" style=\"color:rgb(255,95,210)\">▸  </span><span class=\"r\" style=\"color:rgb(180,139,255)\">directory  </span><span class=\"r\" style=\"color:rgb(255,95,210)\">▸  </span><span class=\"r\" style=\"color:rgb(255,95,210)\">release/1.2  </span><span class=\"r\" style=\"color:rgb(255,95,210)\">▸  </span><span class=\"r\" style=\"color:rgb(10,10,22);background:rgb(255,77,109);font-weight:700\"> ctx 88% </span><span class=\"r\">  </span><span class=\"r\" style=\"color:rgb(255,95,210)\">▸  </span><span class=\"r\" style=\"color:rgb(90,106,138)\">5h </span><span class=\"r\" style=\"color:rgb(255,209,102)\">71%</span><span class=\"r\" style=\"color:rgb(90,106,138)\"> · </span><span class=\"r\" style=\"color:rgb(90,106,138)\">7d </span><span class=\"r\" style=\"color:rgb(10,10,22);background:rgb(255,77,109);font-weight:700\"> 92% </span><span class=\"r\">  </span><span class=\"r\" style=\"color:rgb(255,95,210)\">▸  </span><span class=\"r\" style=\"color:rgb(90,106,138)\">$3.10  00:47  </span><span class=\"r\" style=\"color:rgb(61,240,230)\">+612 </span><span class=\"r\" style=\"color:rgb(255,77,109)\">-208</span>"
+ },
+ "10": {
+  "calm": "<span class=\"r\" style=\"color:rgb(255,211,107);background:rgb(20,14,4);font-weight:700\">O4.8</span><span class=\"r\" style=\"color:rgb(255,211,107);background:rgb(20,14,4)\">  </span><span class=\"r\" style=\"color:rgb(106,74,16);background:rgb(20,14,4)\">//  </span><span class=\"r\" style=\"color:rgb(255,176,0);background:rgb(20,14,4)\">DIRECTORY  </span><span class=\"r\" style=\"color:rgb(106,74,16);background:rgb(20,14,4)\">//  </span><span class=\"r\" style=\"color:rgb(255,176,0);background:rgb(20,14,4)\">MAIN  </span><span class=\"r\" style=\"color:rgb(106,74,16);background:rgb(20,14,4)\">//  </span><span class=\"r\" style=\"color:rgb(138,95,18);background:rgb(20,14,4)\">CTX </span><span class=\"r\" style=\"color:rgb(255,176,0);background:rgb(20,14,4)\">▮</span><span class=\"r\" style=\"color:rgb(58,42,8);background:rgb(20,14,4)\">▮▮▮▮ </span><span class=\"r\" style=\"color:rgb(255,176,0);background:rgb(20,14,4)\">4%  </span><span class=\"r\" style=\"color:rgb(106,74,16);background:rgb(20,14,4)\">//  </span><span class=\"r\" style=\"color:rgb(138,95,18);background:rgb(20,14,4)\">5H </span><span class=\"r\" style=\"color:rgb(255,176,0);background:rgb(20,14,4)\">▮</span><span class=\"r\" style=\"color:rgb(58,42,8);background:rgb(20,14,4)\">▮▮▮▮ </span><span class=\"r\" style=\"color:rgb(255,176,0);background:rgb(20,14,4)\">1% </span><span class=\"r\" style=\"color:rgb(138,95,18);background:rgb(20,14,4)\">7D </span><span class=\"r\" style=\"color:rgb(58,42,8);background:rgb(20,14,4)\">▮▮▮▮▮ </span><span class=\"r\" style=\"color:rgb(255,176,0);background:rgb(20,14,4)\">0%  </span><span class=\"r\" style=\"color:rgb(106,74,16);background:rgb(20,14,4)\">//  </span><span class=\"r\" style=\"color:rgb(138,95,18);background:rgb(20,14,4)\">$0.23 00:02 </span><span class=\"r\" style=\"color:rgb(138,95,18);background:rgb(20,14,4)\">+0 </span><span class=\"r\" style=\"color:rgb(138,95,18);background:rgb(20,14,4)\">-0</span>",
+  "hot": "<span class=\"r\" style=\"color:rgb(255,211,107);background:rgb(20,14,4);font-weight:700\">O4.8</span><span class=\"r\" style=\"color:rgb(255,211,107);background:rgb(20,14,4)\">  </span><span class=\"r\" style=\"color:rgb(106,74,16);background:rgb(20,14,4)\">//  </span><span class=\"r\" style=\"color:rgb(255,176,0);background:rgb(20,14,4)\">DIRECTORY  </span><span class=\"r\" style=\"color:rgb(106,74,16);background:rgb(20,14,4)\">//  </span><span class=\"r\" style=\"color:rgb(255,176,0);background:rgb(20,14,4)\">RELEASE/1.2  </span><span class=\"r\" style=\"color:rgb(106,74,16);background:rgb(20,14,4)\">//  </span><span class=\"r\" style=\"color:rgb(138,95,18);background:rgb(20,14,4)\">CTX </span><span class=\"r\" style=\"color:rgb(255,122,69);background:rgb(20,14,4)\">▮▮▮▮</span><span class=\"r\" style=\"color:rgb(58,42,8);background:rgb(20,14,4)\">▮ </span><span class=\"r\" style=\"color:rgb(255,122,69);background:rgb(20,14,4);font-weight:700\">88%</span><span class=\"r\" style=\"color:rgb(255,122,69);background:rgb(20,14,4)\">  </span><span class=\"r\" style=\"color:rgb(106,74,16);background:rgb(20,14,4)\">//  </span><span class=\"r\" style=\"color:rgb(138,95,18);background:rgb(20,14,4)\">5H </span><span class=\"r\" style=\"color:rgb(255,211,107);background:rgb(20,14,4)\">▮▮▮▮</span><span class=\"r\" style=\"color:rgb(58,42,8);background:rgb(20,14,4)\">▮ </span><span class=\"r\" style=\"color:rgb(255,211,107);background:rgb(20,14,4)\">71% </span><span class=\"r\" style=\"color:rgb(138,95,18);background:rgb(20,14,4)\">7D </span><span class=\"r\" style=\"color:rgb(255,122,69);background:rgb(20,14,4)\">▮▮▮▮▮ </span><span class=\"r\" style=\"color:rgb(255,122,69);background:rgb(20,14,4);font-weight:700\">92%</span><span class=\"r\" style=\"color:rgb(255,122,69);background:rgb(20,14,4)\">  </span><span class=\"r\" style=\"color:rgb(106,74,16);background:rgb(20,14,4)\">//  </span><span class=\"r\" style=\"color:rgb(138,95,18);background:rgb(20,14,4)\">$3.10 00:47 </span><span class=\"r\" style=\"color:rgb(255,176,0);background:rgb(20,14,4)\">+612 </span><span class=\"r\" style=\"color:rgb(255,122,69);background:rgb(20,14,4)\">-208</span>"
+ },
+ "11": {
+  "calm": "<span class=\"r\" style=\"color:rgb(232,228,220);font-weight:700\">[O4.8]</span><span class=\"r\" style=\"color:rgb(232,228,220)\"> </span><span class=\"r\" style=\"color:rgb(232,228,220)\">DIRECTORY </span><span class=\"r\" style=\"color:rgb(110,106,98)\">/MAIN </span><span class=\"r\" style=\"color:rgb(110,106,98)\">CTX_4 </span><span class=\"r\" style=\"color:rgb(110,106,98)\">5H_1 </span><span class=\"r\" style=\"color:rgb(110,106,98)\">7D_0 </span><span class=\"r\" style=\"color:rgb(110,106,98)\">$0.23 00:02 +0/-0 </span><span class=\"r\" style=\"color:rgb(110,106,98)\">OK</span>",
+  "hot": "<span class=\"r\" style=\"color:rgb(255,59,31);font-weight:700\">[O4.8]</span><span class=\"r\" style=\"color:rgb(255,59,31)\"> </span><span class=\"r\" style=\"color:rgb(232,228,220)\">DIRECTORY </span><span class=\"r\" style=\"color:rgb(110,106,98)\">/RELEASE/1.2 </span><span class=\"r\" style=\"color:rgb(255,59,31);font-weight:700\">CTX_88</span><span class=\"r\" style=\"color:rgb(255,59,31)\"> </span><span class=\"r\" style=\"color:rgb(232,228,220)\">5H_71 </span><span class=\"r\" style=\"color:rgb(255,59,31);font-weight:700\">7D_92</span><span class=\"r\" style=\"color:rgb(255,59,31)\"> </span><span class=\"r\" style=\"color:rgb(110,106,98)\">$3.10 00:47 +612/-208 </span><span class=\"r\" style=\"color:rgb(26,25,23);background:rgb(255,59,31);font-weight:700\"> !! LIMIT </span>"
+ },
+ "12": {
+  "calm": "<span class=\"r\" style=\"background:rgb(30,29,27)\"> </span><span class=\"r\" style=\"color:rgb(46,95,163);background:rgb(30,29,27)\">●</span><span class=\"r\" style=\"color:rgb(232,178,30);background:rgb(30,29,27)\">■</span><span class=\"r\" style=\"color:rgb(217,58,43);background:rgb(30,29,27)\">▲ </span><span class=\"r\" style=\"color:rgb(237,232,224);background:rgb(30,29,27);font-weight:700\">O4.8</span><span class=\"r\" style=\"color:rgb(237,232,224);background:rgb(30,29,27)\">   </span><span class=\"r\" style=\"color:rgb(237,232,224);background:rgb(30,29,27)\">directory   </span><span class=\"r\" style=\"color:rgb(232,178,30);background:rgb(30,29,27)\">main   </span><span class=\"r\" style=\"color:rgb(46,95,163);background:rgb(30,29,27)\">● </span><span class=\"r\" style=\"color:rgb(237,232,224);background:rgb(30,29,27)\">ctx 4%   </span><span class=\"r\" style=\"color:rgb(46,95,163);background:rgb(30,29,27)\">● </span><span class=\"r\" style=\"color:rgb(139,133,124);background:rgb(30,29,27)\">5h 1%  </span><span class=\"r\" style=\"color:rgb(46,95,163);background:rgb(30,29,27)\">● </span><span class=\"r\" style=\"color:rgb(139,133,124);background:rgb(30,29,27)\">7d 0%   </span><span class=\"r\" style=\"color:rgb(139,133,124);background:rgb(30,29,27)\">$0.23  00:02  </span><span class=\"r\" style=\"color:rgb(46,95,163);background:rgb(30,29,27)\">+0 </span><span class=\"r\" style=\"color:rgb(217,58,43);background:rgb(30,29,27)\">-0 </span>",
+  "hot": "<span class=\"r\" style=\"background:rgb(30,29,27)\"> </span><span class=\"r\" style=\"color:rgb(46,95,163);background:rgb(30,29,27)\">●</span><span class=\"r\" style=\"color:rgb(232,178,30);background:rgb(30,29,27)\">■</span><span class=\"r\" style=\"color:rgb(217,58,43);background:rgb(30,29,27)\">▲ </span><span class=\"r\" style=\"color:rgb(237,232,224);background:rgb(30,29,27);font-weight:700\">O4.8</span><span class=\"r\" style=\"color:rgb(237,232,224);background:rgb(30,29,27)\">   </span><span class=\"r\" style=\"color:rgb(237,232,224);background:rgb(30,29,27)\">directory   </span><span class=\"r\" style=\"color:rgb(232,178,30);background:rgb(30,29,27)\">release/1.2   </span><span class=\"r\" style=\"color:rgb(217,58,43);background:rgb(30,29,27);font-weight:700\">▲</span><span class=\"r\" style=\"color:rgb(217,58,43);background:rgb(30,29,27)\"> </span><span class=\"r\" style=\"color:rgb(237,232,224);background:rgb(30,29,27)\">ctx 88%   </span><span class=\"r\" style=\"color:rgb(232,178,30);background:rgb(30,29,27)\">■ </span><span class=\"r\" style=\"color:rgb(139,133,124);background:rgb(30,29,27)\">5h 71%  </span><span class=\"r\" style=\"color:rgb(217,58,43);background:rgb(30,29,27);font-weight:700\">▲</span><span class=\"r\" style=\"color:rgb(217,58,43);background:rgb(30,29,27)\"> </span><span class=\"r\" style=\"color:rgb(139,133,124);background:rgb(30,29,27)\">7d 92%   </span><span class=\"r\" style=\"color:rgb(139,133,124);background:rgb(30,29,27)\">$3.10  00:47  </span><span class=\"r\" style=\"color:rgb(46,95,163);background:rgb(30,29,27)\">+612 </span><span class=\"r\" style=\"color:rgb(217,58,43);background:rgb(30,29,27)\">-208 </span>"
+ },
+ "13": {
+  "calm": "<span class=\"r\" style=\"color:rgb(222,219,212);font-weight:700\">O4.8</span><span class=\"r\" style=\"color:rgb(227,6,19)\">.    </span><span class=\"r\" style=\"color:rgb(222,219,212)\">directory</span><span class=\"r\" style=\"color:rgb(120,116,108)\"> — main    </span><span class=\"r\" style=\"color:rgb(120,116,108)\">ctx </span><span class=\"r\" style=\"color:rgb(222,219,212)\">  4%    </span><span class=\"r\" style=\"color:rgb(120,116,108)\">5h </span><span class=\"r\" style=\"color:rgb(222,219,212)\">  1%    </span><span class=\"r\" style=\"color:rgb(120,116,108)\">7d </span><span class=\"r\" style=\"color:rgb(222,219,212)\">  0%    </span><span class=\"r\" style=\"color:rgb(120,116,108)\">$0.23  00:02  </span><span class=\"r\" style=\"color:rgb(222,219,212)\">+0 </span><span class=\"r\" style=\"color:rgb(120,116,108)\">-0</span>",
+  "hot": "<span class=\"r\" style=\"color:rgb(222,219,212);font-weight:700\">O4.8</span><span class=\"r\" style=\"color:rgb(227,6,19)\">.    </span><span class=\"r\" style=\"color:rgb(222,219,212)\">directory</span><span class=\"r\" style=\"color:rgb(120,116,108)\"> — release/1.2    </span><span class=\"r\" style=\"color:rgb(120,116,108)\">ctx </span><span class=\"r\" style=\"color:rgb(227,6,19);font-weight:700\"> 88%</span><span class=\"r\" style=\"color:rgb(227,6,19)\">    </span><span class=\"r\" style=\"color:rgb(120,116,108)\">5h </span><span class=\"r\" style=\"color:rgb(222,219,212);font-weight:700\"> 71%</span><span class=\"r\" style=\"color:rgb(222,219,212)\">    </span><span class=\"r\" style=\"color:rgb(120,116,108)\">7d </span><span class=\"r\" style=\"color:rgb(227,6,19);font-weight:700\"> 92%</span><span class=\"r\" style=\"color:rgb(227,6,19)\">    </span><span class=\"r\" style=\"color:rgb(120,116,108)\">$3.10  00:47  </span><span class=\"r\" style=\"color:rgb(222,219,212)\">+612 </span><span class=\"r\" style=\"color:rgb(120,116,108)\">-208</span>"
+ },
+ "14": {
+  "calm": "<span class=\"r\" style=\"color:rgb(138,155,124)\">◆ </span><span class=\"r\" style=\"color:rgb(216,210,198)\">O4.8   </span><span class=\"r\" style=\"color:rgb(168,162,150)\">directory   </span><span class=\"r\" style=\"color:rgb(107,103,94)\">main   </span><span class=\"r\" style=\"color:rgb(138,155,124)\">◔ </span><span class=\"r\" style=\"color:rgb(107,103,94)\">ctx </span><span class=\"r\" style=\"color:rgb(168,162,150)\">4   </span><span class=\"r\" style=\"color:rgb(138,155,124)\">◔ </span><span class=\"r\" style=\"color:rgb(107,103,94)\">5h </span><span class=\"r\" style=\"color:rgb(168,162,150)\">1  </span><span class=\"r\" style=\"color:rgb(107,103,94)\">○ </span><span class=\"r\" style=\"color:rgb(107,103,94)\">7d </span><span class=\"r\" style=\"color:rgb(168,162,150)\">0   </span><span class=\"r\" style=\"color:rgb(107,103,94)\">$0.23  00:02  </span><span class=\"r\" style=\"color:rgb(138,155,124)\">+0 </span><span class=\"r\" style=\"color:rgb(176,112,92)\">-0</span>",
+  "hot": "<span class=\"r\" style=\"color:rgb(138,155,124)\">◆ </span><span class=\"r\" style=\"color:rgb(216,210,198)\">O4.8   </span><span class=\"r\" style=\"color:rgb(168,162,150)\">directory   </span><span class=\"r\" style=\"color:rgb(107,103,94)\">release/1.2   </span><span class=\"r\" style=\"color:rgb(176,112,92)\">● </span><span class=\"r\" style=\"color:rgb(107,103,94)\">ctx </span><span class=\"r\" style=\"color:rgb(168,162,150)\">88   </span><span class=\"r\" style=\"color:rgb(194,163,107)\">◐ </span><span class=\"r\" style=\"color:rgb(107,103,94)\">5h </span><span class=\"r\" style=\"color:rgb(168,162,150)\">71  </span><span class=\"r\" style=\"color:rgb(176,112,92)\">● </span><span class=\"r\" style=\"color:rgb(107,103,94)\">7d </span><span class=\"r\" style=\"color:rgb(168,162,150)\">92   </span><span class=\"r\" style=\"color:rgb(107,103,94)\">$3.10  00:47  </span><span class=\"r\" style=\"color:rgb(138,155,124)\">+612 </span><span class=\"r\" style=\"color:rgb(176,112,92)\">-208</span>"
+ },
+ "15": {
+  "calm": "<span class=\"g cap\"><i style=\"background:rgb(53,66,106);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(53,66,106);background:rgb(53,66,106)\"> </span><span class=\"r\" style=\"color:rgb(239,243,250);background:rgb(53,66,106);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(239,243,250);background:rgb(53,66,106)\"> </span><span class=\"g cap\"><i style=\"background:rgb(53,66,106);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(53,66,106)\"> </span><span class=\"g cap\"><i style=\"background:rgb(42,53,80);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(42,53,80);background:rgb(42,53,80)\"> </span><span class=\"r\" style=\"color:rgb(239,243,250);background:rgb(42,53,80)\">directory </span><span class=\"g cap\"><i style=\"background:rgb(42,53,80);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(42,53,80)\"> </span><span class=\"g cap\"><i style=\"background:rgb(42,53,80);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(42,53,80);background:rgb(42,53,80)\"> </span><span class=\"g br\" style=\"background:rgb(42,53,80)\"><svg viewBox=\"0 0 10 13\" style=\"display:block;width:100%;height:100%\"><g stroke=\"rgb(159,176,204)\" fill=\"none\" stroke-width=\"1.1\"><circle cx=\"2.7\" cy=\"2.8\" r=\"1.4\"/><circle cx=\"2.7\" cy=\"10.2\" r=\"1.4\"/><circle cx=\"7.3\" cy=\"4.4\" r=\"1.4\"/><path d=\"M2.7 4.2v4.6M7.3 5.8c0 2.6-4.6 1.9-4.6 4.4\"/></g></svg></span><span class=\"r\" style=\"color:rgb(159,176,204);background:rgb(42,53,80)\"> main </span><span class=\"g cap\"><i style=\"background:rgb(42,53,80);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(42,53,80)\"> </span><span class=\"g cap\"><i style=\"background:rgb(42,53,80);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(42,53,80);background:rgb(42,53,80)\"> </span><span class=\"r\" style=\"color:rgb(159,176,204);background:rgb(42,53,80)\">ctx </span><span class=\"r\" style=\"color:rgb(155,232,200);background:rgb(42,53,80)\">4% </span><span class=\"g cap\"><i style=\"background:rgb(42,53,80);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(42,53,80)\"> </span><span class=\"g cap\"><i style=\"background:rgb(42,53,80);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(42,53,80);background:rgb(42,53,80)\"> </span><span class=\"r\" style=\"color:rgb(159,176,204);background:rgb(42,53,80)\">5h </span><span class=\"r\" style=\"color:rgb(155,232,200);background:rgb(42,53,80)\">1%  </span><span class=\"r\" style=\"color:rgb(159,176,204);background:rgb(42,53,80)\">7d </span><span class=\"r\" style=\"color:rgb(155,232,200);background:rgb(42,53,80)\">0% </span><span class=\"g cap\"><i style=\"background:rgb(42,53,80);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(42,53,80)\"> </span><span class=\"g cap\"><i style=\"background:rgb(42,53,80);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(42,53,80);background:rgb(42,53,80)\"> </span><span class=\"r\" style=\"color:rgb(159,176,204);background:rgb(42,53,80)\">$0.23  00:02  </span><span class=\"r\" style=\"color:rgb(155,232,200);background:rgb(42,53,80)\">+0 </span><span class=\"r\" style=\"color:rgb(255,143,163);background:rgb(42,53,80)\">-0 </span><span class=\"g cap\"><i style=\"background:rgb(42,53,80);border-radius:0 999px 999px 0\"></i></span>",
+  "hot": "<span class=\"g cap\"><i style=\"background:rgb(53,66,106);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(53,66,106);background:rgb(53,66,106)\"> </span><span class=\"r\" style=\"color:rgb(239,243,250);background:rgb(53,66,106);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(239,243,250);background:rgb(53,66,106)\"> </span><span class=\"g cap\"><i style=\"background:rgb(53,66,106);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(53,66,106)\"> </span><span class=\"g cap\"><i style=\"background:rgb(42,53,80);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(42,53,80);background:rgb(42,53,80)\"> </span><span class=\"r\" style=\"color:rgb(239,243,250);background:rgb(42,53,80)\">directory </span><span class=\"g cap\"><i style=\"background:rgb(42,53,80);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(42,53,80)\"> </span><span class=\"g cap\"><i style=\"background:rgb(42,53,80);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(42,53,80);background:rgb(42,53,80)\"> </span><span class=\"g br\" style=\"background:rgb(42,53,80)\"><svg viewBox=\"0 0 10 13\" style=\"display:block;width:100%;height:100%\"><g stroke=\"rgb(159,176,204)\" fill=\"none\" stroke-width=\"1.1\"><circle cx=\"2.7\" cy=\"2.8\" r=\"1.4\"/><circle cx=\"2.7\" cy=\"10.2\" r=\"1.4\"/><circle cx=\"7.3\" cy=\"4.4\" r=\"1.4\"/><path d=\"M2.7 4.2v4.6M7.3 5.8c0 2.6-4.6 1.9-4.6 4.4\"/></g></svg></span><span class=\"r\" style=\"color:rgb(159,176,204);background:rgb(42,53,80)\"> release/1.2 </span><span class=\"g cap\"><i style=\"background:rgb(42,53,80);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(42,53,80)\"> </span><span class=\"g cap\"><i style=\"background:rgb(42,53,80);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(42,53,80);background:rgb(42,53,80)\"> </span><span class=\"r\" style=\"color:rgb(159,176,204);background:rgb(42,53,80)\">ctx </span><span class=\"r\" style=\"color:rgb(255,143,163);background:rgb(42,53,80);font-weight:700\">88%</span><span class=\"r\" style=\"color:rgb(255,143,163);background:rgb(42,53,80)\"> </span><span class=\"g cap\"><i style=\"background:rgb(42,53,80);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(42,53,80)\"> </span><span class=\"g cap\"><i style=\"background:rgb(42,53,80);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(42,53,80);background:rgb(42,53,80)\"> </span><span class=\"r\" style=\"color:rgb(159,176,204);background:rgb(42,53,80)\">5h </span><span class=\"r\" style=\"color:rgb(255,217,142);background:rgb(42,53,80)\">71%  </span><span class=\"r\" style=\"color:rgb(159,176,204);background:rgb(42,53,80)\">7d </span><span class=\"r\" style=\"color:rgb(255,143,163);background:rgb(42,53,80);font-weight:700\">92%</span><span class=\"r\" style=\"color:rgb(255,143,163);background:rgb(42,53,80)\"> </span><span class=\"g cap\"><i style=\"background:rgb(42,53,80);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(42,53,80)\"> </span><span class=\"g cap\"><i style=\"background:rgb(42,53,80);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(42,53,80);background:rgb(42,53,80)\"> </span><span class=\"r\" style=\"color:rgb(159,176,204);background:rgb(42,53,80)\">$3.10  00:47  </span><span class=\"r\" style=\"color:rgb(155,232,200);background:rgb(42,53,80)\">+612 </span><span class=\"r\" style=\"color:rgb(255,143,163);background:rgb(42,53,80)\">-208 </span><span class=\"g cap\"><i style=\"background:rgb(42,53,80);border-radius:0 999px 999px 0\"></i></span>"
+ },
+ "16": {
+  "calm": "<span class=\"r\" style=\"color:rgb(255,111,181);font-weight:700\">◆</span><span class=\"r\" style=\"color:rgb(46,196,182);font-weight:700\">O4.8</span><span class=\"r\" style=\"color:rgb(46,196,182)\"> </span><span class=\"r\" style=\"color:rgb(255,111,181)\">▚▞ </span><span class=\"r\" style=\"color:rgb(255,210,63)\">directory </span><span class=\"r\" style=\"color:rgb(46,196,182)\">▚▞ </span><span class=\"r\" style=\"color:rgb(155,93,229)\">▸main </span><span class=\"r\" style=\"color:rgb(255,210,63)\">▚▞ </span><span class=\"r\" style=\"color:rgb(245,240,232)\">ctx</span><span class=\"r\" style=\"color:rgb(46,196,182)\">4% </span><span class=\"r\" style=\"color:rgb(155,93,229)\">▚▞ </span><span class=\"r\" style=\"color:rgb(245,240,232)\">5h</span><span class=\"r\" style=\"color:rgb(46,196,182)\">1% </span><span class=\"r\" style=\"color:rgb(245,240,232)\">7d</span><span class=\"r\" style=\"color:rgb(46,196,182)\">0% </span><span class=\"r\" style=\"color:rgb(255,111,181)\">▚▞ </span><span class=\"r\" style=\"color:rgb(245,240,232)\">$0.23 00:02 </span><span class=\"r\" style=\"color:rgb(46,196,182)\">+0 </span><span class=\"r\" style=\"color:rgb(255,111,181)\">-0</span>",
+  "hot": "<span class=\"r\" style=\"color:rgb(255,111,181);font-weight:700\">◆</span><span class=\"r\" style=\"color:rgb(46,196,182);font-weight:700\">O4.8</span><span class=\"r\" style=\"color:rgb(46,196,182)\"> </span><span class=\"r\" style=\"color:rgb(255,111,181)\">▚▞ </span><span class=\"r\" style=\"color:rgb(255,210,63)\">directory </span><span class=\"r\" style=\"color:rgb(46,196,182)\">▚▞ </span><span class=\"r\" style=\"color:rgb(155,93,229)\">▸release/1.2 </span><span class=\"r\" style=\"color:rgb(255,210,63)\">▚▞ </span><span class=\"r\" style=\"color:rgb(245,240,232)\">ctx</span><span class=\"r\" style=\"color:rgb(255,111,181);font-weight:700\">88%</span><span class=\"r\" style=\"color:rgb(255,111,181)\"> </span><span class=\"r\" style=\"color:rgb(155,93,229)\">▚▞ </span><span class=\"r\" style=\"color:rgb(245,240,232)\">5h</span><span class=\"r\" style=\"color:rgb(255,210,63)\">71% </span><span class=\"r\" style=\"color:rgb(245,240,232)\">7d</span><span class=\"r\" style=\"color:rgb(255,111,181);font-weight:700\">92%</span><span class=\"r\" style=\"color:rgb(255,111,181)\"> </span><span class=\"r\" style=\"color:rgb(255,111,181)\">▚▞ </span><span class=\"r\" style=\"color:rgb(245,240,232)\">$3.10 00:47 </span><span class=\"r\" style=\"color:rgb(46,196,182)\">+612 </span><span class=\"r\" style=\"color:rgb(255,111,181)\">-208</span>"
+ },
+ "17": {
+  "calm": "<span class=\"r\" style=\"background:rgb(26,24,22)\"> </span><span class=\"r\" style=\"color:rgb(212,175,106);background:rgb(26,24,22)\">❯❯ </span><span class=\"r\" style=\"color:rgb(240,220,168);background:rgb(26,24,22);font-weight:700\">O4.8</span><span class=\"r\" style=\"color:rgb(240,220,168);background:rgb(26,24,22)\"> </span><span class=\"r\" style=\"color:rgb(212,175,106);background:rgb(26,24,22)\">❮❮  </span><span class=\"r\" style=\"color:rgb(212,175,106);background:rgb(26,24,22)\">━  </span><span class=\"r\" style=\"color:rgb(240,220,168);background:rgb(26,24,22)\">directory  </span><span class=\"r\" style=\"color:rgb(212,175,106);background:rgb(26,24,22)\">━  </span><span class=\"r\" style=\"color:rgb(138,125,94);background:rgb(26,24,22)\">§ main  </span><span class=\"r\" style=\"color:rgb(212,175,106);background:rgb(26,24,22)\">━  </span><span class=\"r\" style=\"color:rgb(138,125,94);background:rgb(26,24,22)\">CTX </span><span class=\"r\" style=\"color:rgb(95,168,140);background:rgb(26,24,22)\">4%  </span><span class=\"r\" style=\"color:rgb(212,175,106);background:rgb(26,24,22)\">━  </span><span class=\"r\" style=\"color:rgb(138,125,94);background:rgb(26,24,22)\">5H </span><span class=\"r\" style=\"color:rgb(95,168,140);background:rgb(26,24,22)\">1%</span><span class=\"r\" style=\"color:rgb(212,175,106);background:rgb(26,24,22)\"> ∙ </span><span class=\"r\" style=\"color:rgb(138,125,94);background:rgb(26,24,22)\">7D </span><span class=\"r\" style=\"color:rgb(95,168,140);background:rgb(26,24,22)\">0%  </span><span class=\"r\" style=\"color:rgb(212,175,106);background:rgb(26,24,22)\">━  </span><span class=\"r\" style=\"color:rgb(138,125,94);background:rgb(26,24,22)\">$0.23</span><span class=\"r\" style=\"color:rgb(212,175,106);background:rgb(26,24,22)\"> ∙ </span><span class=\"r\" style=\"color:rgb(138,125,94);background:rgb(26,24,22)\">00:02</span><span class=\"r\" style=\"color:rgb(212,175,106);background:rgb(26,24,22)\"> ∙ </span><span class=\"r\" style=\"color:rgb(95,168,140);background:rgb(26,24,22)\">+0 </span><span class=\"r\" style=\"color:rgb(194,91,91);background:rgb(26,24,22)\">-0 </span>",
+  "hot": "<span class=\"r\" style=\"background:rgb(26,24,22)\"> </span><span class=\"r\" style=\"color:rgb(212,175,106);background:rgb(26,24,22)\">❯❯ </span><span class=\"r\" style=\"color:rgb(240,220,168);background:rgb(26,24,22);font-weight:700\">O4.8</span><span class=\"r\" style=\"color:rgb(240,220,168);background:rgb(26,24,22)\"> </span><span class=\"r\" style=\"color:rgb(212,175,106);background:rgb(26,24,22)\">❮❮  </span><span class=\"r\" style=\"color:rgb(212,175,106);background:rgb(26,24,22)\">━  </span><span class=\"r\" style=\"color:rgb(240,220,168);background:rgb(26,24,22)\">directory  </span><span class=\"r\" style=\"color:rgb(212,175,106);background:rgb(26,24,22)\">━  </span><span class=\"r\" style=\"color:rgb(138,125,94);background:rgb(26,24,22)\">§ release/1.2  </span><span class=\"r\" style=\"color:rgb(212,175,106);background:rgb(26,24,22)\">━  </span><span class=\"r\" style=\"color:rgb(138,125,94);background:rgb(26,24,22)\">CTX </span><span class=\"r\" style=\"color:rgb(194,91,91);background:rgb(26,24,22);font-weight:700\">88%</span><span class=\"r\" style=\"color:rgb(194,91,91);background:rgb(26,24,22)\">  </span><span class=\"r\" style=\"color:rgb(212,175,106);background:rgb(26,24,22)\">━  </span><span class=\"r\" style=\"color:rgb(138,125,94);background:rgb(26,24,22)\">5H </span><span class=\"r\" style=\"color:rgb(212,175,106);background:rgb(26,24,22)\">71%</span><span class=\"r\" style=\"color:rgb(212,175,106);background:rgb(26,24,22)\"> ∙ </span><span class=\"r\" style=\"color:rgb(138,125,94);background:rgb(26,24,22)\">7D </span><span class=\"r\" style=\"color:rgb(194,91,91);background:rgb(26,24,22);font-weight:700\">92%</span><span class=\"r\" style=\"color:rgb(194,91,91);background:rgb(26,24,22)\">  </span><span class=\"r\" style=\"color:rgb(212,175,106);background:rgb(26,24,22)\">━  </span><span class=\"r\" style=\"color:rgb(138,125,94);background:rgb(26,24,22)\">$3.10</span><span class=\"r\" style=\"color:rgb(212,175,106);background:rgb(26,24,22)\"> ∙ </span><span class=\"r\" style=\"color:rgb(138,125,94);background:rgb(26,24,22)\">00:47</span><span class=\"r\" style=\"color:rgb(212,175,106);background:rgb(26,24,22)\"> ∙ </span><span class=\"r\" style=\"color:rgb(95,168,140);background:rgb(26,24,22)\">+612 </span><span class=\"r\" style=\"color:rgb(194,91,91);background:rgb(26,24,22)\">-208 </span>"
+ },
+ "18": {
+  "calm": "<span class=\"r\" style=\"color:rgb(136,192,208);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(136,192,208)\">  </span><span class=\"r\" style=\"color:rgb(236,239,244)\">directory  </span><span class=\"r\" style=\"color:rgb(129,161,193)\">▸ main  </span><span class=\"r\" style=\"color:rgb(97,110,136)\">ctx </span><span class=\"r\" style=\"color:rgb(163,190,140)\">4%  </span><span class=\"r\" style=\"color:rgb(97,110,136)\">5h </span><span class=\"r\" style=\"color:rgb(163,190,140)\">1%  </span><span class=\"r\" style=\"color:rgb(97,110,136)\">7d </span><span class=\"r\" style=\"color:rgb(163,190,140)\">0%  </span><span class=\"r\" style=\"color:rgb(97,110,136)\">$0.23  00:02  </span><span class=\"r\" style=\"color:rgb(163,190,140)\">+0 </span><span class=\"r\" style=\"color:rgb(191,97,106)\">-0</span>",
+  "hot": "<span class=\"r\" style=\"color:rgb(136,192,208);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(136,192,208)\">  </span><span class=\"r\" style=\"color:rgb(236,239,244)\">directory  </span><span class=\"r\" style=\"color:rgb(129,161,193)\">▸ release/1.2  </span><span class=\"r\" style=\"color:rgb(97,110,136)\">ctx </span><span class=\"r\" style=\"color:rgb(191,97,106)\">88%  </span><span class=\"r\" style=\"color:rgb(97,110,136)\">5h </span><span class=\"r\" style=\"color:rgb(235,203,139)\">71%  </span><span class=\"r\" style=\"color:rgb(97,110,136)\">7d </span><span class=\"r\" style=\"color:rgb(191,97,106)\">92%  </span><span class=\"r\" style=\"color:rgb(97,110,136)\">$3.10  00:47  </span><span class=\"r\" style=\"color:rgb(163,190,140)\">+612 </span><span class=\"r\" style=\"color:rgb(191,97,106)\">-208</span>"
+ },
+ "19": {
+  "calm": "<span class=\"r\" style=\"background:rgb(40,42,54)\"> </span><span class=\"r\" style=\"color:rgb(189,147,249);background:rgb(40,42,54);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(189,147,249);background:rgb(40,42,54)\"> </span><span class=\"r\" style=\"color:rgb(98,114,164);background:rgb(40,42,54)\">:: </span><span class=\"r\" style=\"color:rgb(248,248,242);background:rgb(40,42,54)\">directory </span><span class=\"r\" style=\"color:rgb(98,114,164);background:rgb(40,42,54)\">:: </span><span class=\"r\" style=\"color:rgb(255,121,198);background:rgb(40,42,54)\">▸ main </span><span class=\"r\" style=\"color:rgb(98,114,164);background:rgb(40,42,54)\">:: </span><span class=\"r\" style=\"color:rgb(98,114,164);background:rgb(40,42,54)\">ctx </span><span class=\"r\" style=\"color:rgb(80,250,123);background:rgb(40,42,54)\">4% </span><span class=\"r\" style=\"color:rgb(98,114,164);background:rgb(40,42,54)\">:: </span><span class=\"r\" style=\"color:rgb(98,114,164);background:rgb(40,42,54)\">5h </span><span class=\"r\" style=\"color:rgb(80,250,123);background:rgb(40,42,54)\">1% </span><span class=\"r\" style=\"color:rgb(98,114,164);background:rgb(40,42,54)\">7d </span><span class=\"r\" style=\"color:rgb(80,250,123);background:rgb(40,42,54)\">0% </span><span class=\"r\" style=\"color:rgb(98,114,164);background:rgb(40,42,54)\">:: </span><span class=\"r\" style=\"color:rgb(241,250,140);background:rgb(40,42,54)\">$0.23 00:02 </span><span class=\"r\" style=\"color:rgb(80,250,123);background:rgb(40,42,54)\">+0 </span><span class=\"r\" style=\"color:rgb(255,85,85);background:rgb(40,42,54)\">-0 </span>",
+  "hot": "<span class=\"r\" style=\"background:rgb(40,42,54)\"> </span><span class=\"r\" style=\"color:rgb(189,147,249);background:rgb(40,42,54);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(189,147,249);background:rgb(40,42,54)\"> </span><span class=\"r\" style=\"color:rgb(98,114,164);background:rgb(40,42,54)\">:: </span><span class=\"r\" style=\"color:rgb(248,248,242);background:rgb(40,42,54)\">directory </span><span class=\"r\" style=\"color:rgb(98,114,164);background:rgb(40,42,54)\">:: </span><span class=\"r\" style=\"color:rgb(255,121,198);background:rgb(40,42,54)\">▸ release/1.2 </span><span class=\"r\" style=\"color:rgb(98,114,164);background:rgb(40,42,54)\">:: </span><span class=\"r\" style=\"color:rgb(98,114,164);background:rgb(40,42,54)\">ctx </span><span class=\"r\" style=\"color:rgb(255,85,85);background:rgb(40,42,54);font-weight:700\">88%</span><span class=\"r\" style=\"color:rgb(255,85,85);background:rgb(40,42,54)\"> </span><span class=\"r\" style=\"color:rgb(98,114,164);background:rgb(40,42,54)\">:: </span><span class=\"r\" style=\"color:rgb(98,114,164);background:rgb(40,42,54)\">5h </span><span class=\"r\" style=\"color:rgb(255,184,108);background:rgb(40,42,54)\">71% </span><span class=\"r\" style=\"color:rgb(98,114,164);background:rgb(40,42,54)\">7d </span><span class=\"r\" style=\"color:rgb(255,85,85);background:rgb(40,42,54);font-weight:700\">92%</span><span class=\"r\" style=\"color:rgb(255,85,85);background:rgb(40,42,54)\"> </span><span class=\"r\" style=\"color:rgb(98,114,164);background:rgb(40,42,54)\">:: </span><span class=\"r\" style=\"color:rgb(241,250,140);background:rgb(40,42,54)\">$3.10 00:47 </span><span class=\"r\" style=\"color:rgb(80,250,123);background:rgb(40,42,54)\">+612 </span><span class=\"r\" style=\"color:rgb(255,85,85);background:rgb(40,42,54)\">-208 </span>"
+ },
+ "20": {
+  "calm": "<span class=\"r\" style=\"color:rgb(170,255,170);font-weight:700\">▌O4.8▐</span><span class=\"r\" style=\"color:rgb(170,255,170)\"> </span><span class=\"r\" style=\"color:rgb(10,92,42)\">⋮ </span><span class=\"r\" style=\"color:rgb(51,255,102)\">directory </span><span class=\"r\" style=\"color:rgb(10,92,42)\">⋮ </span><span class=\"r\" style=\"color:rgb(14,138,62)\">▸main </span><span class=\"r\" style=\"color:rgb(10,92,42)\">⋮ </span><span class=\"r\" style=\"color:rgb(10,92,42)\">ctx</span><span class=\"r\" style=\"color:rgb(51,255,102)\">4% </span><span class=\"r\" style=\"color:rgb(10,92,42)\">⋮ </span><span class=\"r\" style=\"color:rgb(10,92,42)\">5h</span><span class=\"r\" style=\"color:rgb(51,255,102)\">1% </span><span class=\"r\" style=\"color:rgb(10,92,42)\">7d</span><span class=\"r\" style=\"color:rgb(51,255,102)\">0% </span><span class=\"r\" style=\"color:rgb(10,92,42)\">⋮ </span><span class=\"r\" style=\"color:rgb(10,92,42)\">$0.23 00:02 </span><span class=\"r\" style=\"color:rgb(10,92,42)\">+0 </span><span class=\"r\" style=\"color:rgb(10,92,42)\">-0</span>",
+  "hot": "<span class=\"r\" style=\"color:rgb(170,255,170);font-weight:700\">▌O4.8▐</span><span class=\"r\" style=\"color:rgb(170,255,170)\"> </span><span class=\"r\" style=\"color:rgb(10,92,42)\">⋮ </span><span class=\"r\" style=\"color:rgb(51,255,102)\">directory </span><span class=\"r\" style=\"color:rgb(10,92,42)\">⋮ </span><span class=\"r\" style=\"color:rgb(14,138,62)\">▸release/1.2 </span><span class=\"r\" style=\"color:rgb(10,92,42)\">⋮ </span><span class=\"r\" style=\"color:rgb(10,92,42)\">ctx</span><span class=\"r\" style=\"color:rgb(255,107,74);font-weight:700\">88%</span><span class=\"r\" style=\"color:rgb(255,107,74)\"> </span><span class=\"r\" style=\"color:rgb(10,92,42)\">⋮ </span><span class=\"r\" style=\"color:rgb(10,92,42)\">5h</span><span class=\"r\" style=\"color:rgb(204,255,51)\">71% </span><span class=\"r\" style=\"color:rgb(10,92,42)\">7d</span><span class=\"r\" style=\"color:rgb(255,107,74);font-weight:700\">92%</span><span class=\"r\" style=\"color:rgb(255,107,74)\"> </span><span class=\"r\" style=\"color:rgb(10,92,42)\">⋮ </span><span class=\"r\" style=\"color:rgb(10,92,42)\">$3.10 00:47 </span><span class=\"r\" style=\"color:rgb(51,255,102)\">+612 </span><span class=\"r\" style=\"color:rgb(255,107,74)\">-208</span>"
+ },
+ "21": {
+  "calm": "<span class=\"r\" style=\"color:rgb(74,61,85);background:rgb(232,160,168)\"> </span><span class=\"r\" style=\"color:rgb(74,61,85);background:rgb(232,160,168);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(74,61,85);background:rgb(232,160,168)\"> </span><span class=\"r\" style=\"color:rgb(74,61,85);background:rgb(240,216,184)\"> directory </span><span class=\"r\" style=\"color:rgb(245,240,250);background:rgb(155,138,184)\"> ▸ main </span><span class=\"r\" style=\"color:rgb(74,61,85);background:rgb(127,200,196)\"> ctx 4% </span><span class=\"r\" style=\"color:rgb(74,61,85);background:rgb(127,200,196)\"> 5h 1% </span><span class=\"r\" style=\"color:rgb(74,61,85);background:rgb(127,200,196)\"> 7d 0% </span><span class=\"r\" style=\"color:rgb(74,61,85);background:rgb(184,200,220)\"> $0.23 · 00:02 · +0 -0 </span>",
+  "hot": "<span class=\"r\" style=\"color:rgb(74,61,85);background:rgb(232,160,168)\"> </span><span class=\"r\" style=\"color:rgb(74,61,85);background:rgb(232,160,168);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(74,61,85);background:rgb(232,160,168)\"> </span><span class=\"r\" style=\"color:rgb(74,61,85);background:rgb(240,216,184)\"> directory </span><span class=\"r\" style=\"color:rgb(245,240,250);background:rgb(155,138,184)\"> ▸ release/1.2 </span><span class=\"r\" style=\"color:rgb(74,61,85);background:rgb(217,119,136)\"> ctx 88% </span><span class=\"r\" style=\"color:rgb(74,61,85);background:rgb(242,185,138)\"> 5h 71% </span><span class=\"r\" style=\"color:rgb(74,61,85);background:rgb(217,119,136)\"> 7d 92% </span><span class=\"r\" style=\"color:rgb(74,61,85);background:rgb(184,200,220)\"> $3.10 · 00:47 · +612 -208 </span>"
+ },
+ "22": {
+  "calm": "<span class=\"r\" style=\"color:rgb(53,196,240);font-weight:700\">❬</span><span class=\"r\" style=\"color:rgb(53,196,240);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(53,196,240);font-weight:700\">❭</span><span class=\"r\" style=\"color:rgb(53,196,240)\"> </span><span class=\"r\" style=\"color:rgb(237,237,245);font-weight:700\">❬</span><span class=\"r\" style=\"color:rgb(237,237,245)\">directory</span><span class=\"r\" style=\"color:rgb(237,237,245);font-weight:700\">❭</span><span class=\"r\" style=\"color:rgb(237,237,245)\"> </span><span class=\"r\" style=\"color:rgb(106,112,128);font-weight:700\">❬</span><span class=\"r\" style=\"color:rgb(106,112,128)\">▸ main</span><span class=\"r\" style=\"color:rgb(106,112,128);font-weight:700\">❭</span><span class=\"r\" style=\"color:rgb(106,112,128)\"> </span><span class=\"r\" style=\"color:rgb(53,196,240);font-weight:700\">❬</span><span class=\"r\" style=\"color:rgb(53,196,240)\">ctx 4%</span><span class=\"r\" style=\"color:rgb(53,196,240);font-weight:700\">❭</span><span class=\"r\" style=\"color:rgb(53,196,240)\"> </span><span class=\"r\" style=\"color:rgb(53,196,240);font-weight:700\">❬</span><span class=\"r\" style=\"color:rgb(53,196,240)\">5h 1%</span><span class=\"r\" style=\"color:rgb(53,196,240);font-weight:700\">❭</span><span class=\"r\" style=\"color:rgb(53,196,240)\"> </span><span class=\"r\" style=\"color:rgb(53,196,240);font-weight:700\">❬</span><span class=\"r\" style=\"color:rgb(53,196,240)\">7d 0%</span><span class=\"r\" style=\"color:rgb(53,196,240);font-weight:700\">❭</span><span class=\"r\" style=\"color:rgb(53,196,240)\"> </span><span class=\"r\" style=\"color:rgb(106,112,128);font-weight:700\">❬</span><span class=\"r\" style=\"color:rgb(106,112,128)\">$0.23 00:02 +0 -0</span><span class=\"r\" style=\"color:rgb(106,112,128);font-weight:700\">❭</span>",
+  "hot": "<span class=\"r\" style=\"color:rgb(53,196,240);font-weight:700\">❬</span><span class=\"r\" style=\"color:rgb(53,196,240);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(53,196,240);font-weight:700\">❭</span><span class=\"r\" style=\"color:rgb(53,196,240)\"> </span><span class=\"r\" style=\"color:rgb(237,237,245);font-weight:700\">❬</span><span class=\"r\" style=\"color:rgb(237,237,245)\">directory</span><span class=\"r\" style=\"color:rgb(237,237,245);font-weight:700\">❭</span><span class=\"r\" style=\"color:rgb(237,237,245)\"> </span><span class=\"r\" style=\"color:rgb(106,112,128);font-weight:700\">❬</span><span class=\"r\" style=\"color:rgb(106,112,128)\">▸ release/1.2</span><span class=\"r\" style=\"color:rgb(106,112,128);font-weight:700\">❭</span><span class=\"r\" style=\"color:rgb(106,112,128)\"> </span><span class=\"r\" style=\"color:rgb(240,80,168);font-weight:700\">❬</span><span class=\"r\" style=\"color:rgb(240,80,168)\">ctx 88%</span><span class=\"r\" style=\"color:rgb(240,80,168);font-weight:700\">❭</span><span class=\"r\" style=\"color:rgb(240,80,168)\"> </span><span class=\"r\" style=\"color:rgb(240,224,64);font-weight:700\">❬</span><span class=\"r\" style=\"color:rgb(240,224,64)\">5h 71%</span><span class=\"r\" style=\"color:rgb(240,224,64);font-weight:700\">❭</span><span class=\"r\" style=\"color:rgb(240,224,64)\"> </span><span class=\"r\" style=\"color:rgb(240,80,168);font-weight:700\">❬</span><span class=\"r\" style=\"color:rgb(240,80,168)\">7d 92%</span><span class=\"r\" style=\"color:rgb(240,80,168);font-weight:700\">❭</span><span class=\"r\" style=\"color:rgb(240,80,168)\"> </span><span class=\"r\" style=\"color:rgb(106,112,128);font-weight:700\">❬</span><span class=\"r\" style=\"color:rgb(106,112,128)\">$3.10 00:47 +612 -208</span><span class=\"r\" style=\"color:rgb(106,112,128);font-weight:700\">❭</span>"
+ },
+ "23": {
+  "calm": "<span class=\"r\" style=\"color:rgb(64,240,255)\">✦ </span><span class=\"r\" style=\"color:rgb(240,248,255);font-weight:700\">O4.8</span><span class=\"r\" style=\"color:rgb(240,248,255)\"> </span><span class=\"r\" style=\"color:rgb(26,42,74)\">┆ </span><span class=\"r\" style=\"color:rgb(64,240,255)\">directory </span><span class=\"r\" style=\"color:rgb(26,42,74)\">┆ </span><span class=\"r\" style=\"color:rgb(200,255,64)\">◈ main </span><span class=\"r\" style=\"color:rgb(26,42,74)\">┆ </span><span class=\"r\" style=\"color:rgb(200,255,64)\">◇ ctx 4% </span><span class=\"r\" style=\"color:rgb(26,42,74)\">┆ </span><span class=\"r\" style=\"color:rgb(200,255,64)\">△1% </span><span class=\"r\" style=\"color:rgb(200,255,64)\">▽0% </span><span class=\"r\" style=\"color:rgb(26,42,74)\">┆ </span><span class=\"r\" style=\"color:rgb(96,128,176)\">$0.23  00:02  </span><span class=\"r\" style=\"color:rgb(200,255,64)\">+0 </span><span class=\"r\" style=\"color:rgb(255,64,200)\">-0</span>",
+  "hot": "<span class=\"r\" style=\"color:rgb(64,240,255)\">✦ </span><span class=\"r\" style=\"color:rgb(240,248,255);font-weight:700\">O4.8</span><span class=\"r\" style=\"color:rgb(240,248,255)\"> </span><span class=\"r\" style=\"color:rgb(26,42,74)\">┆ </span><span class=\"r\" style=\"color:rgb(64,240,255)\">directory </span><span class=\"r\" style=\"color:rgb(26,42,74)\">┆ </span><span class=\"r\" style=\"color:rgb(200,255,64)\">◈ release/1.2 </span><span class=\"r\" style=\"color:rgb(26,42,74)\">┆ </span><span class=\"r\" style=\"color:rgb(255,64,200);font-weight:700\">◆ ctx 88%</span><span class=\"r\" style=\"color:rgb(255,64,200)\"> </span><span class=\"r\" style=\"color:rgb(26,42,74)\">┆ </span><span class=\"r\" style=\"color:rgb(255,160,64)\">▲71% </span><span class=\"r\" style=\"color:rgb(255,64,200);font-weight:700\">▼92%</span><span class=\"r\" style=\"color:rgb(255,64,200)\"> </span><span class=\"r\" style=\"color:rgb(26,42,74)\">┆ </span><span class=\"r\" style=\"color:rgb(96,128,176)\">$3.10  00:47  </span><span class=\"r\" style=\"color:rgb(200,255,64)\">+612 </span><span class=\"r\" style=\"color:rgb(255,64,200)\">-208</span>"
+ },
+ "24": {
+  "calm": "<span class=\"r\" style=\"color:rgb(248,232,200);background:rgb(184,118,62)\"> </span><span class=\"r\" style=\"color:rgb(248,232,200);background:rgb(184,118,62);font-weight:700\">◆O4.8</span><span class=\"r\" style=\"color:rgb(248,232,200);background:rgb(184,118,62)\"> </span><span class=\"r\"> </span><span class=\"r\" style=\"color:rgb(248,232,200)\">directory </span><span class=\"r\" style=\"color:rgb(104,168,224)\">▸main </span><span class=\"r\" style=\"color:rgb(154,122,88)\">CTX</span><span class=\"r\" style=\"color:rgb(95,168,56);background:rgb(42,30,20)\">▒</span><span class=\"r\" style=\"color:rgb(74,56,40);background:rgb(42,30,20)\">░░░░░</span><span class=\"r\" style=\"color:rgb(95,168,56)\">4% </span><span class=\"r\" style=\"color:rgb(154,122,88)\">5H</span><span class=\"r\" style=\"color:rgb(95,168,56);background:rgb(42,30,20)\">▒</span><span class=\"r\" style=\"color:rgb(74,56,40);background:rgb(42,30,20)\">░░</span><span class=\"r\" style=\"color:rgb(95,168,56)\">1% </span><span class=\"r\" style=\"color:rgb(154,122,88)\">7D</span><span class=\"r\" style=\"color:rgb(74,56,40);background:rgb(42,30,20)\">░░░</span><span class=\"r\" style=\"color:rgb(95,168,56)\">0% </span><span class=\"r\" style=\"color:rgb(232,200,96)\">⛁</span><span class=\"r\" style=\"color:rgb(232,200,96)\">$0.23 00:02 </span><span class=\"r\" style=\"color:rgb(95,168,56)\">+0 </span><span class=\"r\" style=\"color:rgb(208,88,104)\">-0</span>",
+  "hot": "<span class=\"r\" style=\"color:rgb(248,232,200);background:rgb(184,118,62)\"> </span><span class=\"r\" style=\"color:rgb(248,232,200);background:rgb(184,118,62);font-weight:700\">◆O4.8</span><span class=\"r\" style=\"color:rgb(248,232,200);background:rgb(184,118,62)\"> </span><span class=\"r\"> </span><span class=\"r\" style=\"color:rgb(248,232,200)\">directory </span><span class=\"r\" style=\"color:rgb(104,168,224)\">▸release/1.2 </span><span class=\"r\" style=\"color:rgb(154,122,88)\">CTX</span><span class=\"r\" style=\"color:rgb(208,88,104);background:rgb(42,30,20)\">▓▓▓▓▓</span><span class=\"r\" style=\"color:rgb(208,88,104);background:rgb(42,30,20)\">▒</span><span class=\"r\" style=\"color:rgb(208,88,104);font-weight:700\">88%</span><span class=\"r\" style=\"color:rgb(208,88,104)\"> </span><span class=\"r\" style=\"color:rgb(154,122,88)\">5H</span><span class=\"r\" style=\"color:rgb(232,200,96);background:rgb(42,30,20)\">▓▓</span><span class=\"r\" style=\"color:rgb(74,56,40);background:rgb(42,30,20)\">░</span><span class=\"r\" style=\"color:rgb(232,200,96)\">71% </span><span class=\"r\" style=\"color:rgb(154,122,88)\">7D</span><span class=\"r\" style=\"color:rgb(208,88,104);background:rgb(42,30,20)\">▓▓</span><span class=\"r\" style=\"color:rgb(208,88,104);background:rgb(42,30,20)\">▒</span><span class=\"r\" style=\"color:rgb(208,88,104);font-weight:700\">92%</span><span class=\"r\" style=\"color:rgb(208,88,104)\"> </span><span class=\"r\" style=\"color:rgb(232,200,96)\">⛁</span><span class=\"r\" style=\"color:rgb(232,200,96)\">$3.10 00:47 </span><span class=\"r\" style=\"color:rgb(95,168,56)\">+612 </span><span class=\"r\" style=\"color:rgb(208,88,104)\">-208</span>"
+ },
+ "25": {
+  "calm": "<span class=\"g cap\"><i style=\"background:rgb(184,56,59);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(184,56,59);background:rgb(184,56,59)\"> </span><span class=\"r\" style=\"color:rgb(240,230,210);background:rgb(184,56,59);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(240,230,210);background:rgb(184,56,59)\"> </span><span class=\"g cap\"><i style=\"background:rgb(184,56,59);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(184,56,59)\"> </span><span class=\"g cap\"><i style=\"background:rgb(197,175,145);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(197,175,145);background:rgb(197,175,145)\"> </span><span class=\"r\" style=\"color:rgb(42,34,38);background:rgb(197,175,145)\">directory </span><span class=\"g cap\"><i style=\"background:rgb(197,175,145);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(197,175,145)\"> </span><span class=\"g cap\"><i style=\"background:rgb(88,133,162);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(88,133,162);background:rgb(88,133,162)\"> </span><span class=\"g br\" style=\"background:rgb(88,133,162)\"><svg viewBox=\"0 0 10 13\" style=\"display:block;width:100%;height:100%\"><g stroke=\"rgb(240,230,210)\" fill=\"none\" stroke-width=\"1.1\"><circle cx=\"2.7\" cy=\"2.8\" r=\"1.4\"/><circle cx=\"2.7\" cy=\"10.2\" r=\"1.4\"/><circle cx=\"7.3\" cy=\"4.4\" r=\"1.4\"/><path d=\"M2.7 4.2v4.6M7.3 5.8c0 2.6-4.6 1.9-4.6 4.4\"/></g></svg></span><span class=\"r\" style=\"color:rgb(240,230,210);background:rgb(88,133,162)\"> main </span><span class=\"g cap\"><i style=\"background:rgb(88,133,162);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(88,133,162)\"> </span><span class=\"g cap\"><i style=\"background:rgb(88,133,162);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(88,133,162);background:rgb(88,133,162)\"> </span><span class=\"r\" style=\"color:rgb(240,230,210);background:rgb(88,133,162)\">ctx 4% </span><span class=\"g cap\"><i style=\"background:rgb(88,133,162);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(88,133,162)\"> </span><span class=\"g cap\"><i style=\"background:rgb(42,34,38);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(42,34,38);background:rgb(42,34,38)\"> </span><span class=\"r\" style=\"color:rgb(197,175,145);background:rgb(42,34,38)\">5h 1% · 7d 0% · $0.23 · 00:02 · +0 -0 </span><span class=\"g cap\"><i style=\"background:rgb(42,34,38);border-radius:0 999px 999px 0\"></i></span>",
+  "hot": "<span class=\"g cap\"><i style=\"background:rgb(184,56,59);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(184,56,59);background:rgb(184,56,59)\"> </span><span class=\"r\" style=\"color:rgb(240,230,210);background:rgb(184,56,59);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(240,230,210);background:rgb(184,56,59)\"> </span><span class=\"g cap\"><i style=\"background:rgb(184,56,59);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(184,56,59)\"> </span><span class=\"g cap\"><i style=\"background:rgb(197,175,145);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(197,175,145);background:rgb(197,175,145)\"> </span><span class=\"r\" style=\"color:rgb(42,34,38);background:rgb(197,175,145)\">directory </span><span class=\"g cap\"><i style=\"background:rgb(197,175,145);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(197,175,145)\"> </span><span class=\"g cap\"><i style=\"background:rgb(88,133,162);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(88,133,162);background:rgb(88,133,162)\"> </span><span class=\"g br\" style=\"background:rgb(88,133,162)\"><svg viewBox=\"0 0 10 13\" style=\"display:block;width:100%;height:100%\"><g stroke=\"rgb(240,230,210)\" fill=\"none\" stroke-width=\"1.1\"><circle cx=\"2.7\" cy=\"2.8\" r=\"1.4\"/><circle cx=\"2.7\" cy=\"10.2\" r=\"1.4\"/><circle cx=\"7.3\" cy=\"4.4\" r=\"1.4\"/><path d=\"M2.7 4.2v4.6M7.3 5.8c0 2.6-4.6 1.9-4.6 4.4\"/></g></svg></span><span class=\"r\" style=\"color:rgb(240,230,210);background:rgb(88,133,162)\"> release/1.2 </span><span class=\"g cap\"><i style=\"background:rgb(88,133,162);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(88,133,162)\"> </span><span class=\"g cap\"><i style=\"background:rgb(184,56,59);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(184,56,59);background:rgb(184,56,59)\"> </span><span class=\"r\" style=\"color:rgb(240,230,210);background:rgb(184,56,59);font-weight:700\">ctx 88% !</span><span class=\"r\" style=\"color:rgb(240,230,210);background:rgb(184,56,59)\"> </span><span class=\"g cap\"><i style=\"background:rgb(184,56,59);border-radius:0 999px 999px 0\"></i></span><span class=\"r\" style=\"color:rgb(184,56,59)\"> </span><span class=\"g cap\"><i style=\"background:rgb(42,34,38);border-radius:999px 0 0 999px\"></i></span><span class=\"r\" style=\"color:rgb(42,34,38);background:rgb(42,34,38)\"> </span><span class=\"r\" style=\"color:rgb(197,175,145);background:rgb(42,34,38)\">5h </span><span class=\"r\" style=\"color:rgb(233,180,76);background:rgb(42,34,38)\">71%</span><span class=\"r\" style=\"color:rgb(197,175,145);background:rgb(42,34,38)\"> · 7d </span><span class=\"r\" style=\"color:rgb(224,108,96);background:rgb(42,34,38);font-weight:700\">92%</span><span class=\"r\" style=\"color:rgb(197,175,145);background:rgb(42,34,38)\"> · $3.10 · 00:47 · +612 -208 </span><span class=\"g cap\"><i style=\"background:rgb(42,34,38);border-radius:0 999px 999px 0\"></i></span>"
+ },
+ "26": {
+  "calm": "<span class=\"r\" style=\"background:rgb(23,50,62)\"> </span><span class=\"r\" style=\"color:rgb(234,248,250);background:rgb(240,56,74)\"> </span><span class=\"r\" style=\"color:rgb(234,248,250);background:rgb(240,56,74);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(234,248,250);background:rgb(240,56,74)\"> </span><span class=\"r\" style=\"background:rgb(23,50,62)\"> </span><span class=\"r\" style=\"color:rgb(234,248,250);background:rgb(46,154,196)\"> directory </span><span class=\"r\" style=\"background:rgb(23,50,62)\"> </span><span class=\"r\" style=\"color:rgb(23,50,62);background:rgb(122,199,79)\"> ▸ main </span><span class=\"r\" style=\"background:rgb(23,50,62)\"> </span><span class=\"r\" style=\"color:rgb(23,50,62);background:rgb(122,199,79)\"> ctx 4% </span><span class=\"r\" style=\"background:rgb(23,50,62)\"> </span><span class=\"r\" style=\"color:rgb(23,50,62);background:rgb(245,226,154)\"> 5h 1% </span><span class=\"r\" style=\"background:rgb(23,50,62)\"> </span><span class=\"r\" style=\"color:rgb(23,50,62);background:rgb(245,226,154)\"> 7d 0% </span><span class=\"r\" style=\"background:rgb(23,50,62)\"> </span><span class=\"r\" style=\"color:rgb(23,50,62);background:rgb(234,248,250)\"> $0.23 · 00:02 · +0 -0 </span><span class=\"r\" style=\"background:rgb(23,50,62)\"> </span>",
+  "hot": "<span class=\"r\" style=\"background:rgb(23,50,62)\"> </span><span class=\"r\" style=\"color:rgb(234,248,250);background:rgb(240,56,74)\"> </span><span class=\"r\" style=\"color:rgb(234,248,250);background:rgb(240,56,74);font-weight:700\">◆ O4.8</span><span class=\"r\" style=\"color:rgb(234,248,250);background:rgb(240,56,74)\"> </span><span class=\"r\" style=\"background:rgb(23,50,62)\"> </span><span class=\"r\" style=\"color:rgb(234,248,250);background:rgb(46,154,196)\"> directory </span><span class=\"r\" style=\"background:rgb(23,50,62)\"> </span><span class=\"r\" style=\"color:rgb(23,50,62);background:rgb(122,199,79)\"> ▸ release/1.2 </span><span class=\"r\" style=\"background:rgb(23,50,62)\"> </span><span class=\"r\" style=\"color:rgb(234,248,250);background:rgb(240,56,74)\"> ctx </span><span class=\"r\" style=\"color:rgb(234,248,250);background:rgb(240,56,74);font-weight:700\">88%</span><span class=\"r\" style=\"color:rgb(234,248,250);background:rgb(240,56,74)\"> </span><span class=\"r\" style=\"background:rgb(23,50,62)\"> </span><span class=\"r\" style=\"color:rgb(23,50,62);background:rgb(240,168,48)\"> 5h 71% </span><span class=\"r\" style=\"background:rgb(23,50,62)\"> </span><span class=\"r\" style=\"color:rgb(234,248,250);background:rgb(240,56,74)\"> 7d 92% </span><span class=\"r\" style=\"background:rgb(23,50,62)\"> </span><span class=\"r\" style=\"color:rgb(23,50,62);background:rgb(234,248,250)\"> $3.10 · 00:47 · +612 -208 </span><span class=\"r\" style=\"background:rgb(23,50,62)\"> </span>"
+ },
+ "27": {
+  "calm": "<span class=\"r\" style=\"color:rgb(232,232,232);font-weight:700\">O4.8</span><span class=\"r\" style=\"color:rgb(232,232,232)\">  </span><span class=\"r\" style=\"color:rgb(51,51,51)\">│  </span><span class=\"r\" style=\"color:rgb(154,154,154)\">directory  </span><span class=\"r\" style=\"color:rgb(51,51,51)\">│  </span><span class=\"r\" style=\"color:rgb(106,106,106)\">main  </span><span class=\"r\" style=\"color:rgb(51,51,51)\">│  </span><span class=\"r\" style=\"color:rgb(69,69,69)\">ctx </span><span class=\"r\" style=\"color:rgb(106,106,106)\">4%  </span><span class=\"r\" style=\"color:rgb(51,51,51)\">│  </span><span class=\"r\" style=\"color:rgb(69,69,69)\">5h </span><span class=\"r\" style=\"color:rgb(106,106,106)\">1%  </span><span class=\"r\" style=\"color:rgb(69,69,69)\">7d </span><span class=\"r\" style=\"color:rgb(106,106,106)\">0%  </span><span class=\"r\" style=\"color:rgb(51,51,51)\">│  </span><span class=\"r\" style=\"color:rgb(69,69,69)\">$0.23  00:02  </span><span class=\"r\" style=\"color:rgb(154,154,154)\">+0 </span><span class=\"r\" style=\"color:rgb(154,154,154)\">-0</span>",
+  "hot": "<span class=\"r\" style=\"color:rgb(232,232,232);font-weight:700\">O4.8</span><span class=\"r\" style=\"color:rgb(232,232,232)\">  </span><span class=\"r\" style=\"color:rgb(51,51,51)\">│  </span><span class=\"r\" style=\"color:rgb(154,154,154)\">directory  </span><span class=\"r\" style=\"color:rgb(51,51,51)\">│  </span><span class=\"r\" style=\"color:rgb(106,106,106)\">release/1.2  </span><span class=\"r\" style=\"color:rgb(51,51,51)\">│  </span><span class=\"r\" style=\"color:rgb(69,69,69)\">ctx </span><span class=\"r\" style=\"color:rgb(192,48,48);font-weight:700\">88%</span><span class=\"r\" style=\"color:rgb(192,48,48)\">  </span><span class=\"r\" style=\"color:rgb(51,51,51)\">│  </span><span class=\"r\" style=\"color:rgb(69,69,69)\">5h </span><span class=\"r\" style=\"color:rgb(154,154,154)\">71%  </span><span class=\"r\" style=\"color:rgb(69,69,69)\">7d </span><span class=\"r\" style=\"color:rgb(192,48,48);font-weight:700\">92%</span><span class=\"r\" style=\"color:rgb(192,48,48)\">  </span><span class=\"r\" style=\"color:rgb(51,51,51)\">│  </span><span class=\"r\" style=\"color:rgb(69,69,69)\">$3.10  00:47  </span><span class=\"r\" style=\"color:rgb(154,154,154)\">+612 </span><span class=\"r\" style=\"color:rgb(154,154,154)\">-208</span>"
+ }
+};
+// PREVIEWS:END
 
 const GROUP_SUB = { 'Everyday':'practical daily-drivers', 'Expressive':'bolder, for fun',
   'Style studies':'ten design movements, translated to a terminal',
   'Game art styles':'seven game looks, from your reference sheet' };
 
-document.getElementById('cards').innerHTML = DESIGNS.map((d,i)=>{
+document.getElementById('cards').innerHTML = CARDS.map((d,i)=>{
   const bcls = d.badge[1]==='safe' ? 'safe' : 'font';
-  const cls  = d.cls   ? ' '+d.cls   : '';
-  const pan  = d.panel ? ' '+d.panel : '';
+  const pv = PREVIEWS[i+1] || { calm:'', hot:'' };
   const hd = d.group
     ? `<div class="grouphd"><h2>${d.group}</h2><hr><span>${GROUP_SUB[d.group]||''}</span></div>` : '';
   return `${hd}<div class="card">
@@ -658,9 +290,9 @@ document.getElementById('cards').innerHTML = DESIGNS.map((d,i)=>{
       <span class="badge ${bcls}">${d.badge[0]}</span>
     </div>
     <p class="pitch">${d.pitch}</p>
-    <div class="term${pan}">
-      <div class="row"><span class="tag">calm</span><span class="bar${cls}">${d.fn(CALM)}</span></div>
-      <div class="row"><span class="tag hot">high use</span><span class="bar hot${cls}">${d.fn(HOT)}</span></div>
+    <div class="term">
+      <div class="row"><span class="tag">calm</span><span class="bar">${pv.calm}</span></div>
+      <div class="row"><span class="tag hot">high use</span><span class="bar hot">${pv.hot}</span></div>
     </div>
     <div class="cardcmd">want this one? reply <code>${i+1}</code> in Claude Code &nbsp;·&nbsp; or later: <code>/custom-statusline</code> → ${i+1}</div>
   </div>`;
