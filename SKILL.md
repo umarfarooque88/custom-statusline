@@ -73,8 +73,10 @@ echo '{"model":{"display_name":"Opus 4.8"},"workspace":{"current_dir":"'"$PWD"'"
 
 ANSI escape soup is expected in captured output — failure looks like emptiness,
 `jq: command not found`, or a node stack trace. Every design renders the full
-data set (model, dir, branch, ctx, 5h, 7d, cost, time, ±lines) when the payload
-provides it — with the sample payload above, all fields must appear.
+data set (model, dir, ctx, 5h, 7d, cost, time, ±lines) when the payload provides
+it — with the sample payload above, all those values must appear. The branch
+segment additionally requires `current_dir` to be inside a git repo; it hides
+elsewhere by design.
 Success = non-empty output containing the sample values, no error text.
 
 ## Design catalog (numbers)
