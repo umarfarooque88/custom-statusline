@@ -1,66 +1,64 @@
 # customize-status-line
 
-27 ready-made status line designs for Claude Code, selectable by number.
+**27 ready-made status line designs for Claude Code.** Pick one by number from
+a visual gallery — your status line shows your model, directory, git branch,
+context usage, session & weekly rate limits, cost, active time, and lines
+changed, styled the way you like it.
 
-**Install in two steps:**
+## Install (2 steps)
 
-1. Tell Claude Code: `clone <this-repo-URL>` — it puts the skill in the right place.
-2. Run **`/customize-status-line`** — the gallery opens, you pick a number, done.
+1. **Tell Claude Code:**
 
-**That's also the only command to remember:** run `/customize-status-line`
-anytime to change your design. Same command, same flow, forever.
-
----
-
-## 🤖 For Claude — setup instructions
-
-If the user asked you to clone this repository (in any wording: "clone <url>",
-"install this", "set this up"), do ALL of the following, in order. Do not stop
-after the clone.
-
-1. **Clone into the user's skills folder** (create it if missing — a fresh
-   machine usually has no `skills/` directory):
-
-   ```bash
-   mkdir -p ~/.claude/skills
-   git clone <repo-URL> ~/.claude/skills/customize-status-line
+   ```
+   clone <this-repo-URL>
    ```
 
-   If the folder already exists with a `.git`, run `git -C ~/.claude/skills/customize-status-line pull --ff-only` instead.
+   Claude places the skill where it belongs (`~/.claude/skills/`) and tells you
+   what to do next.
 
-   **Already cloned somewhere else** (e.g. into the current project) before
-   reading this? Move it: `mv <cloned-dir> ~/.claude/skills/customize-status-line`
-   — the skill must live in the skills folder to work as `/customize-status-line`.
+2. **Run:**
 
-2. **Requirements check:** `node` must be on PATH (the engine parses JSON with
-   node; jq is often missing, especially on Windows Git Bash). If node is
-   absent, tell the user to install Node.js before running the skill.
+   ```
+   /customize-status-line
+   ```
 
-3. **Hand off to the skill — do NOT install anything yourself.** Tell the user
-   exactly this:
+   The design gallery opens in your browser — 27 designs, each previewed in a
+   calm state and under heavy usage. Reply with the number you like. Done: your
+   status line is live at the next prompt, no restart needed.
 
-   > Skill installed. Now run **`/customize-status-line`** — the design gallery
-   > will open in your browser and I'll set up the one you pick.
-   > (If the command isn't recognized yet, run `/reload-skills` or restart
-   > Claude Code first.)
-   >
-   > Remember that command: **`/customize-status-line`** is also how you change
-   > your design anytime later. Same command, same flow.
+   *(If the command isn't recognized right after installing, run
+   `/reload-skills` or restart Claude Code once.)*
 
-   The skill (`SKILL.md` in this repo) handles everything from there: opening
-   the gallery, taking the number, installing the engine, enabling the
-   statusLine key in settings.json automatically (even if the user never ran
-   `/statusline`), and verifying.
+## Changing your design
 
----
+Run `/customize-status-line` again. Same flow — gallery opens, you reply with a
+number. That's the only command to remember.
 
-## What's inside
+## What you'll see
 
-| File | Purpose |
-|------|---------|
-| `SKILL.md` | The skill — after install, `/customize-status-line` re-opens the gallery and switches designs |
-| `statusline.sh` | The engine — all 27 designs in one script; `DESIGN=n` picks one |
-| `gallery.html` | The visual catalog — all 27 designs, calm + high-usage states |
+Every design shows the full data set (segments hide automatically when data
+isn't available):
+
+| Segment | Example |
+|---|---|
+| Model (short) | `◆ O4.8` |
+| Directory | `my-project` |
+| Git branch | `⌥ main` — only inside a git repo |
+| Context used | `ctx 37%` — green → amber → red as it fills |
+| Session limit (5-hour) | `5h 42%` — Pro/Max sessions |
+| Weekly limit (7-day) | `7d 18%` — Pro/Max sessions |
+| Session cost | `$0.84` — API-equivalent estimate |
+| Active time | `9.0m` |
+| Lines changed | `+58 -9` |
+
+## Requirements
+
+- **Node.js** on PATH (the engine parses JSON with node — no jq needed)
+- **git** on PATH for the branch segment (optional — hides gracefully without it)
+- A **powerline/Nerd font** for designs 1, 2, 6, 15, 25 (Windows Terminal's
+  default Cascadia Mono works). Seeing boxes? Pick any design badged
+  *font-safe* in the gallery, or set `STATUSLINE_PLAIN=1` for flat blocks with
+  colors intact.
 
 ## Manual install (without Claude)
 
@@ -68,25 +66,20 @@ after the clone.
 mkdir -p ~/.claude/skills
 git clone <repo-URL> ~/.claude/skills/customize-status-line
 cp ~/.claude/skills/customize-status-line/statusline.sh ~/.claude/statusline-command.sh
-# edit the DESIGN= line near the top, pick 1-27
+# edit the DESIGN= line near the top of the copied file, pick 1-27
 ```
 
-And merge into `~/.claude/settings.json`:
+Then merge into `~/.claude/settings.json` (create the file as `{}` if missing):
 
 ```json
 "statusLine": { "type": "command", "command": "bash ~/.claude/statusline-command.sh" }
 ```
 
-## Requirements
+## What's in the repo
 
-- Node.js on PATH (JSON parsing — no jq dependency)
-- git on PATH for the branch segment (optional; degrades gracefully)
-- A powerline/Nerd font for designs 1, 2, 6, 15, 25 (or `STATUSLINE_PLAIN=1` —
-  flat blocks, colors intact)
-
-## Data shown
-
-Every design shows the full set: model (short), directory, git branch, context %,
-5h session usage, 7d weekly usage, session cost, active time, +lines/−lines.
-Rate-limit meters appear for Claude Pro/Max sessions; every segment hides itself
-when its data is absent.
+| File | Purpose |
+|------|---------|
+| `SKILL.md` | The skill Claude follows when you run `/customize-status-line` |
+| `statusline.sh` | The engine — all 27 designs in one script |
+| `gallery.html` | The visual catalog (opens locally, no sign-in needed) |
+| `CLAUDE.md` | Setup instructions Claude follows when you say "clone this repo" |
