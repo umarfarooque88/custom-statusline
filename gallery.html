@@ -446,5 +446,7 @@ window.addEventListener('keydown',e=>{
   }
 });
 
-buildFilters(); renderList(); select(0);
+buildFilters(); renderList();
+const pick=parseInt(new URLSearchParams(location.search).get('pick'),10);   // deep-link: ?pick=14
+select(pick>=1&&pick<=27 ? pick-1 : 0);
 </script>
