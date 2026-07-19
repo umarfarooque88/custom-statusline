@@ -14,8 +14,11 @@ by hand, ever.
 
 All designs show the same data, each in its own style: short model name, cwd
 basename, git branch (auto-hidden outside repos), context %, 5-hour session
-usage %, 7-day weekly usage %, session cost, active time, +lines/−lines.
-Every segment degrades gracefully when its data is absent.
+usage % with a `(Xh Ym)` countdown to when that window resets, 7-day weekly
+usage %, session cost, active time, +lines/−lines. Every segment degrades
+gracefully when its data is absent (the 5h reset countdown needs
+`rate_limits.five_hour.resets_at`, Pro/Max-only, absent until the first
+response — it simply doesn't render otherwise).
 
 ## Workflow
 

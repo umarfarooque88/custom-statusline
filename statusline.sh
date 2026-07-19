@@ -58,12 +58,29 @@ const durS  = has(S.durMs) ? (() => { const m = Math.floor(S.durMs / 60000);
   return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); })() : null;   // hh:mm
 const hasLines = S.add != null || S.del != null;
 
+// time until the 5-hour rate-limit window resets (Pro/Max only; absent until
+// first response). resets_at is Unix epoch seconds; format a compact countdown.
+// NOW is injectable (STATUSLINE_NOW, epoch ms) so the gallery renders a stable
+// value; falls back to the real clock in a live session.
+const NOW = process.env.STATUSLINE_NOW ? Number(process.env.STATUSLINE_NOW) : Date.now();
+const h5resetAt = g(d, "rate_limits.five_hour.resets_at");
+const h5left = has(h5resetAt) ? (() => {
+  const ms = h5resetAt * 1000 - NOW;
+  if (ms <= 0) return "now";
+  const m = Math.round(ms / 60000);
+  return m >= 60 ? Math.floor(m / 60) + "h" + String(m % 60).padStart(2, "0") + "m" : m + "m";
+})() : null;
+
 // ---------- ANSI helpers ----------------------------------------------------
 const hx = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 const fg = (h) => { const [r, g2, b] = hx(h); return `\x1b[38;2;${r};${g2};${b}m`; };
 const bg = (h) => { const [r, g2, b] = hx(h); return `\x1b[48;2;${r};${g2};${b}m`; };
 const R = "\x1b[0m", B = "\x1b[1m", NB = "\x1b[22m";
 const c = (h, t) => fg(h) + t;
+
+// reset countdown rendered beside the 5h meter, in a muted color per design;
+// "" when unavailable so it drops out cleanly. Change here to restyle all 27.
+const h5r = (col) => h5left ? c(col, " (" + h5left + ")") : "";
 
 const plain = process.env.STATUSLINE_PLAIN === "1";
 const ARW = plain ? "" : "";           // powerline arrow
@@ -110,7 +127,7 @@ const DESIGNS = {
     S.branch && { bg: W.clay, inner: fg(W.cream) + ` ${BR} ${S.branch} ` },
     has(S.ctx) && { bg: mc(S.ctx), inner: fg(W.ink) + ` ctx ${B}${pct(S.ctx)}${NB} ` },
     (has(S.h5) || has(S.d7)) && { bg: W.slate, inner: " " +
-      [has(S.h5) && c(W.mut,"5h ") + c(mc(S.h5), pct(S.h5)), has(S.d7) && c(W.mut,"7d ") + c(mc(S.d7), pct(S.d7))]
+      [has(S.h5) && c(W.mut,"5h ") + c(mc(S.h5), pct(S.h5)) + h5r(W.mut), has(S.d7) && c(W.mut,"7d ") + c(mc(S.d7), pct(S.d7))]
       .filter(Boolean).join(c(W.mut," · ")) + " " },
   ].filter(Boolean);
   const tailBits = [costS, durS].filter(Boolean).join("  ");
@@ -130,7 +147,7 @@ const DESIGNS = {
     S.branch && { bg: K.br, inner: fg(K.lav) + `${plain ? "⎇" : ""} ${S.branch}` },
     has(S.ctx) && { bg: K.tail, inner: c(mc(S.ctx), "ctx ") + (S.ctx >= 80 ? B + pct(S.ctx) + NB : pct(S.ctx)) },
     (has(S.h5) || has(S.d7)) && { bg: K.tail, inner:
-      [has(S.h5) && c(K.mut,"5h ") + c(mc(S.h5), pct(S.h5)), has(S.d7) && c(K.mut,"7d ") + c(mc(S.d7), pct(S.d7))]
+      [has(S.h5) && c(K.mut,"5h ") + c(mc(S.h5), pct(S.h5)) + h5r(K.mut), has(S.d7) && c(K.mut,"7d ") + c(mc(S.d7), pct(S.d7))]
       .filter(Boolean).join("  ") },
   ].filter(Boolean);
   const bits = [costS, durS].filter(Boolean).join("  ");
@@ -149,7 +166,7 @@ const DESIGNS = {
     c("#dcd6cc", S.dir),
     S.branch && c("#c69a54", "▸ " + S.branch),
     has(S.ctx) && c(mc(S.ctx), "ctx " + hotB(S.ctx, pct(S.ctx))),
-    (has(S.h5) || has(S.d7)) && [has(S.h5) && c(W.mut,"5h ")+c(mc(S.h5), hotB(S.h5, pct(S.h5))), has(S.d7) && c(W.mut,"7d ")+c(mc(S.d7), hotB(S.d7, pct(S.d7)))].filter(Boolean).join(c("#6a625a"," · ")),
+    (has(S.h5) || has(S.d7)) && [has(S.h5) && c(W.mut,"5h ")+c(mc(S.h5), hotB(S.h5, pct(S.h5)))+h5r(W.mut), has(S.d7) && c(W.mut,"7d ")+c(mc(S.d7), hotB(S.d7, pct(S.d7)))].filter(Boolean).join(c("#6a625a"," · ")),
     (costS||durS||hasLines) && c("#7c736a", [costS,durS].filter(Boolean).join("  ") + (hasLines?`  +${S.add||0} -${S.del||0}`:"")),
   ].filter(Boolean).join(`  ${div}  `) + R;
 },
@@ -172,7 +189,7 @@ const DESIGNS = {
   return [
     B + c(W.coral, "◆ " + S.model) + NB + " " + c(W.cream, S.dir) + (S.branch ? " " + c(W.clay, "▸" + S.branch) : ""),
     has(S.ctx) && c(W.mut,"ctx ") + bar(S.ctx,8) + " " + pv(S.ctx),
-    has(S.h5) && c(W.mut,"5h ") + bar(S.h5,4) + " " + pv(S.h5),
+    has(S.h5) && c(W.mut,"5h ") + bar(S.h5,4) + " " + pv(S.h5) + h5r(W.mut),
     has(S.d7) && c(W.mut,"7d ") + bar(S.d7,4) + " " + pv(S.d7),
     tailTxt("#7c736a", "#96C878", "#D66E64", "  "),
   ].filter(Boolean).join("   ") + R;
@@ -187,7 +204,7 @@ const DESIGNS = {
     { bg: "#403a34", inner: fg(W.cream) + ` ${S.dir} ` },
     S.branch && { bg: W.clay, inner: fg(W.cream) + ` ▸ ${S.branch} ` },
     has(S.ctx) && { bg: mc(S.ctx), inner: fg(W.ink) + ` ctx ${S.ctx >= 80 ? B + pct(S.ctx) + NB : pct(S.ctx)} ` },
-    (has(S.h5)||has(S.d7)) && { bg:"#2a2622", inner: " " + [has(S.h5)&&c(W.mut,"5h ")+c(mc(S.h5),pct(S.h5)), has(S.d7)&&c(W.mut,"7d ")+c(mc(S.d7),pct(S.d7))].filter(Boolean).join(" ") + " " },
+    (has(S.h5)||has(S.d7)) && { bg:"#2a2622", inner: " " + [has(S.h5)&&c(W.mut,"5h ")+c(mc(S.h5),pct(S.h5))+h5r(W.mut), has(S.d7)&&c(W.mut,"7d ")+c(mc(S.d7),pct(S.d7))].filter(Boolean).join(" ") + " " },
     (costS||durS||hasLines) && { bg: W.ink, inner: fg(W.mut) + " " + [costS,durS].filter(Boolean).join(" ") +
       (hasLines ? " " + c(W.add,`+${S.add||0}`) + " " + c(W.del,`-${S.del||0}`) : "") + " " },
   ].filter(Boolean);
@@ -203,7 +220,7 @@ const DESIGNS = {
     { bg: K.sand, inner: fg(K.ink) + S.dir },
     S.branch && { bg: K.brown, inner: fg(K.cream) + `${plain ? "⌥" : ""} ${S.branch}` },
     has(S.ctx) && { bg: mc(S.ctx), inner: fg(K.ink) + `ctx ${pct(S.ctx)}` },
-    (has(S.h5)||has(S.d7)) && { bg: K.sand, inner: [has(S.h5)&&c(K.mut,"5h ")+c(mc(S.h5),pct(S.h5)), has(S.d7)&&c(K.mut,"7d ")+c(mc(S.d7),pct(S.d7))].filter(Boolean).join("  ") },
+    (has(S.h5)||has(S.d7)) && { bg: K.sand, inner: [has(S.h5)&&c(K.mut,"5h ")+c(mc(S.h5),pct(S.h5))+h5r(K.mut), has(S.d7)&&c(K.mut,"7d ")+c(mc(S.d7),pct(S.d7))].filter(Boolean).join("  ") },
     (costS||durS||hasLines) && { bg: K.brown, inner: tailTxt(K.cream, "#D8E8C0", "#F8D0C0", " · ") },
   ].filter(Boolean);
   return pills(L, true);
@@ -222,7 +239,7 @@ const DESIGNS = {
     c("#8fb0d6",G.dir) + " " + c(W.cream, S.dir),
     S.branch && c("#c69a54", G.br + S.branch),
     has(S.ctx) && c(mc(S.ctx),G.hp) + " " + xp(S.ctx,6) + " " + pv(S.ctx),
-    (has(S.h5)||has(S.d7)) && c("#F0C36A",G.en) + " " + [has(S.h5)&&c(W.mut,"5h ")+xp(S.h5,4)+" "+pv(S.h5), has(S.d7)&&c(W.mut,"7d ")+xp(S.d7,4)+" "+pv(S.d7)].filter(Boolean).join("  "),
+    (has(S.h5)||has(S.d7)) && c("#F0C36A",G.en) + " " + [has(S.h5)&&c(W.mut,"5h ")+xp(S.h5,4)+" "+pv(S.h5)+h5r(W.mut), has(S.d7)&&c(W.mut,"7d ")+xp(S.d7,4)+" "+pv(S.d7)].filter(Boolean).join("  "),
     (costS||durS||hasLines) && c("#E7C15A",G.gem) + tailTxt(W.mut, "#96C878", "#D66E64"),
   ].filter(Boolean).join("   ") + R;
 },
@@ -231,7 +248,7 @@ const DESIGNS = {
   const stops = ["#D97757","#E0A84A","#8A9A5B","#5AB0C0","#9B7BE0"].map(hx);
   const modelTok = `◆ ${S.model}`;
   const ctxTok = has(S.ctx) ? `ctx ${pct(S.ctx)}` : null;
-  const h5Tok  = has(S.h5)  ? `5h ${pct(S.h5)}`  : null;
+  const h5Tok  = has(S.h5)  ? `5h ${pct(S.h5)}${h5left ? " (" + h5left + ")" : ""}`  : null;
   const d7Tok  = has(S.d7)  ? `7d ${pct(S.d7)}`  : null;
   const usageTok = (h5Tok || d7Tok) ? [h5Tok, d7Tok].filter(Boolean).join(" · ") : null;
   const d7Off = h5Tok ? h5Tok.length + 3 : 0;
@@ -281,7 +298,7 @@ const DESIGNS = {
     c(N.pur, S.dir),
     S.branch && c(N.mag, S.branch),
     has(S.ctx) && (S.ctx >= 80 ? sign("ctx " + pct(S.ctx)) : c(mc(S.ctx), "ctx " + pct(S.ctx))),
-    (has(S.h5)||has(S.d7)) && [has(S.h5) && c(N.dim,"5h ") + (S.h5 >= 80 ? sign(pct(S.h5)) : c(mc(S.h5), pct(S.h5))), has(S.d7) && c(N.dim,"7d ") + (S.d7 >= 80 ? sign(pct(S.d7)) : c(mc(S.d7), pct(S.d7)))].filter(Boolean).join(c(N.dim," · ")),
+    (has(S.h5)||has(S.d7)) && [has(S.h5) && c(N.dim,"5h ") + (S.h5 >= 80 ? sign(pct(S.h5)) : c(mc(S.h5), pct(S.h5))) + h5r(N.dim), has(S.d7) && c(N.dim,"7d ") + (S.d7 >= 80 ? sign(pct(S.d7)) : c(mc(S.d7), pct(S.d7)))].filter(Boolean).join(c(N.dim," · ")),
     tailTxt(N.dim, N.cyan, N.crit, "  "),
   ].filter(Boolean).join("  " + c(N.mag, "▸") + "  ") + R;
 },
@@ -297,7 +314,7 @@ const DESIGNS = {
     c(amb, S.dir.toUpperCase()),
     S.branch && c(amb, S.branch.toUpperCase()),
     has(S.ctx) && c(dim,"CTX ") + bar(S.ctx) + " " + pv(S.ctx),
-    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(dim,"5H ")+bar(S.h5)+" "+pv(S.h5), has(S.d7)&&c(dim,"7D ")+bar(S.d7)+" "+pv(S.d7)].filter(Boolean).join(" "),
+    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(dim,"5H ")+bar(S.h5)+" "+pv(S.h5)+h5r(dim), has(S.d7)&&c(dim,"7D ")+bar(S.d7)+" "+pv(S.d7)].filter(Boolean).join(" "),
     tailTxt(dim, S.add?amb:dim, S.del?"#FF7A45":dim),
   ].filter(Boolean).join("  " + c("#6a4a10","//") + "  ") + R;
 },
@@ -311,7 +328,7 @@ const DESIGNS = {
     c(wh, S.dir.toUpperCase()),
     S.branch && c(gr, "/" + S.branch.toUpperCase()),
     has(S.ctx) && (S.ctx>=80 ? B + c(red, "CTX_"+Math.round(S.ctx)) + NB : S.ctx>=50 ? B + c(wh, "CTX_"+Math.round(S.ctx)) + NB : c(gr, "CTX_"+Math.round(S.ctx))),
-    (has(S.h5)||has(S.d7)) && [has(S.h5)&&met("5H_"+Math.round(S.h5),S.h5), has(S.d7)&&met("7D_"+Math.round(S.d7),S.d7)].filter(Boolean).join(" "),
+    (has(S.h5)||has(S.d7)) && [has(S.h5)&&met("5H_"+Math.round(S.h5),S.h5)+h5r(gr), has(S.d7)&&met("7D_"+Math.round(S.d7),S.d7)].filter(Boolean).join(" "),
     (costS||durS||hasLines) && c(gr, [costS,durS].filter(Boolean).join(" ") + (hasLines?" +"+(S.add||0)+"/-"+(S.del||0):"")),
     alert ? bg(red) + fg("#1A1917") + B + " !! LIMIT " + R : c(gr, "OK"),
   ].filter(Boolean).join(" ") + R;
@@ -325,7 +342,7 @@ const DESIGNS = {
     c(wh, S.dir),
     S.branch && c(yel, S.branch),
     has(S.ctx) && shape(S.ctx) + " " + c(wh, "ctx " + pct(S.ctx)),
-    (has(S.h5)||has(S.d7)) && [has(S.h5)&&shape(S.h5)+" "+c(gr,"5h "+pct(S.h5)), has(S.d7)&&shape(S.d7)+" "+c(gr,"7d "+pct(S.d7))].filter(Boolean).join("  "),
+    (has(S.h5)||has(S.d7)) && [has(S.h5)&&shape(S.h5)+" "+c(gr,"5h "+pct(S.h5))+h5r(gr), has(S.d7)&&shape(S.d7)+" "+c(gr,"7d "+pct(S.d7))].filter(Boolean).join("  "),
     tailTxt(gr, blu, red, "  "),
   ].filter(Boolean).join("   ") + " " + R;
 },
@@ -337,7 +354,7 @@ const DESIGNS = {
     B + c(ink, S.model) + NB + c(red, "."),
     c(ink, S.dir) + (S.branch ? c(gr, " — " + S.branch) : ""),
     has(S.ctx) && c(gr,"ctx ") + v(S.ctx),
-    has(S.h5) && c(gr,"5h ") + v(S.h5),
+    has(S.h5) && c(gr,"5h ") + v(S.h5) + h5r(gr),
     has(S.d7) && c(gr,"7d ") + v(S.d7),
     tailTxt(gr, ink, gr, "  "),
   ].filter(Boolean).join("    ") + R;
@@ -352,7 +369,7 @@ const DESIGNS = {
     c(stone, S.dir),
     S.branch && c(mist, S.branch),
     has(S.ctx) && moon(S.ctx) + " " + c(mist, "ctx ") + c(stone, num(S.ctx)),
-    (has(S.h5)||has(S.d7)) && [has(S.h5)&&moon(S.h5)+" "+c(mist,"5h ")+c(stone,num(S.h5)), has(S.d7)&&moon(S.d7)+" "+c(mist,"7d ")+c(stone,num(S.d7))].filter(Boolean).join("  "),
+    (has(S.h5)||has(S.d7)) && [has(S.h5)&&moon(S.h5)+" "+c(mist,"5h ")+c(stone,num(S.h5))+h5r(mist), has(S.d7)&&moon(S.d7)+" "+c(mist,"7d ")+c(stone,num(S.d7))].filter(Boolean).join("  "),
     tailTxt(mist, moss, rust, "  "),
   ].filter(Boolean).join("   ") + R;
 },
@@ -366,7 +383,7 @@ const DESIGNS = {
     { bg: pane, inner: fg(wh) + S.dir },
     S.branch && { bg: pane, inner: fg(mut) + (plain ? "⌥ " : " ") + S.branch },
     has(S.ctx) && { bg: pane, inner: c(mut,"ctx ") + val(S.ctx) },
-    (has(S.h5)||has(S.d7)) && { bg: pane, inner: [has(S.h5)&&c(mut,"5h ")+val(S.h5), has(S.d7)&&c(mut,"7d ")+val(S.d7)].filter(Boolean).join("  ") },
+    (has(S.h5)||has(S.d7)) && { bg: pane, inner: [has(S.h5)&&c(mut,"5h ")+val(S.h5)+h5r(mut), has(S.d7)&&c(mut,"7d ")+val(S.d7)].filter(Boolean).join("  ") },
     (costS||durS||hasLines) && { bg: pane, inner: tailTxt(mut, "#9BE8C8", "#FF8FA3", "  ") },
   ].filter(Boolean);
   return pills(L, true);
@@ -382,7 +399,7 @@ const DESIGNS = {
     [ye, c(ye, S.dir)],
     S.branch && [pu, c(pu, "▸" + S.branch)],
     has(S.ctx) && [wh, c(wh,"ctx") + hotP(S.ctx)],
-    (has(S.h5)||has(S.d7)) && [wh, [has(S.h5)&&c(wh,"5h")+hotP(S.h5), has(S.d7)&&c(wh,"7d")+hotP(S.d7)].filter(Boolean).join(" ")],
+    (has(S.h5)||has(S.d7)) && [wh, [has(S.h5)&&c(wh,"5h")+hotP(S.h5)+h5r(wh), has(S.d7)&&c(wh,"7d")+hotP(S.d7)].filter(Boolean).join(" ")],
     tail && [wh, tail],
   ].filter(Boolean);
   const cyc = [pk, te, ye, pu];
@@ -407,7 +424,7 @@ const DESIGNS = {
     c(hi2, S.dir),
     S.branch && c(gr, "§ " + S.branch),
     has(S.ctx) && c(gr,"CTX ") + pv(S.ctx),
-    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(gr,"5H ")+pv(S.h5), has(S.d7)&&c(gr,"7D ")+pv(S.d7)].filter(Boolean).join(c(gold," ∙ ")),
+    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(gr,"5H ")+pv(S.h5)+h5r(gr), has(S.d7)&&c(gr,"7D ")+pv(S.d7)].filter(Boolean).join(c(gold," ∙ ")),
     tailTxt(gr, em, ruby, c(gold," ∙ ") + fg(gr)),
   ].filter(Boolean).join("  " + c(gold,"━") + "  ") + " " + R;
 },
@@ -420,7 +437,7 @@ const DESIGNS = {
     c(snow, S.dir),
     S.branch && c(blue, "▸ " + S.branch),
     has(S.ctx) && c(gray,"ctx ") + c(mc(S.ctx), pct(S.ctx)),
-    has(S.h5) && c(gray,"5h ") + c(mc(S.h5), pct(S.h5)),
+    has(S.h5) && c(gray,"5h ") + c(mc(S.h5), pct(S.h5)) + h5r(gray),
     has(S.d7) && c(gray,"7d ") + c(mc(S.d7), pct(S.d7)),
     tailTxt(gray, grn, red, "  "),
   ].filter(Boolean).join("  ") + R;
@@ -435,7 +452,7 @@ const DESIGNS = {
     c(fg2, S.dir),
     S.branch && c(pk, "▸ " + S.branch),
     has(S.ctx) && c(com,"ctx ") + v(S.ctx),
-    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(com,"5h ")+v(S.h5), has(S.d7)&&c(com,"7d ")+v(S.d7)].filter(Boolean).join(" "),
+    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(com,"5h ")+v(S.h5)+h5r(com), has(S.d7)&&c(com,"7d ")+v(S.d7)].filter(Boolean).join(" "),
     tailTxt(yel, grn, red),
   ].filter(Boolean).join(" " + c(com,"::") + " ") + " " + R;
 },
@@ -449,7 +466,7 @@ const DESIGNS = {
     c(md, S.dir),
     S.branch && c(lo, "▸" + S.branch),
     has(S.ctx) && c(dim,"ctx") + mv(S.ctx),
-    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(dim,"5h")+mv(S.h5), has(S.d7)&&c(dim,"7d")+mv(S.d7)].filter(Boolean).join(" "),
+    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(dim,"5h")+mv(S.h5)+h5r(dim), has(S.d7)&&c(dim,"7d")+mv(S.d7)].filter(Boolean).join(" "),
     (() => { const bits = [costS, durS].filter(Boolean);
       let t = bits.length ? c(dim, bits.join(" ")) : "";
       if (hasLines) t += (t ? " " : "") + c(S.add > 0 ? md : dim, "+" + (S.add || 0)) + " " + c(S.del > 0 ? crit : dim, "-" + (S.del || 0));
@@ -465,7 +482,7 @@ const DESIGNS = {
     { bg: sandy, inner: fg(ink) + ` ${S.dir} ` },
     S.branch && { bg: lav, inner: fg("#F5F0FA") + ` ▸ ${S.branch} ` },
     has(S.ctx) && { bg: mc(S.ctx), inner: fg(ink) + ` ctx ${pct(S.ctx)} ` },
-    has(S.h5) && { bg: mc(S.h5), inner: fg(ink) + ` 5h ${pct(S.h5)} ` },
+    has(S.h5) && { bg: mc(S.h5), inner: fg(ink) + ` 5h ${pct(S.h5)}${h5left ? " (" + h5left + ")" : ""} ` },
     has(S.d7) && { bg: mc(S.d7), inner: fg(ink) + ` 7d ${pct(S.d7)} ` },
     (costS||durS||hasLines) && { bg: slate, inner: fg(ink) + " " + [costS,durS,hasLines?("+"+(S.add||0)+" -"+(S.del||0)):null].filter(Boolean).join(" · ") + " " },
   ].filter(Boolean);
@@ -482,7 +499,7 @@ const DESIGNS = {
     box(S.dir, wh),
     S.branch && box("▸ " + S.branch, gr),
     has(S.ctx) && box("ctx " + pct(S.ctx), mc(S.ctx)),
-    has(S.h5) && box("5h " + pct(S.h5), mc(S.h5)),
+    has(S.h5) && box("5h " + pct(S.h5) + (h5left ? " (" + h5left + ")" : ""), mc(S.h5)),
     has(S.d7) && box("7d " + pct(S.d7), mc(S.d7)),
     (costS||durS||hasLines) && box([costS,durS,hasLines?("+"+(S.add||0)+" -"+(S.del||0)):null].filter(Boolean).join(" "), gr),
   ].filter(Boolean).join(" ") + R;
@@ -498,7 +515,7 @@ const DESIGNS = {
     c(cy, S.dir),
     S.branch && c(li, "◈ " + S.branch),
     has(S.ctx) && c(mc(S.ctx), hotB(S.ctx, sh("◇","◆",S.ctx) + " ctx " + pct(S.ctx))),
-    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(mc(S.h5), hotB(S.h5, sh("△","▲",S.h5)+pct(S.h5))), has(S.d7)&&c(mc(S.d7), hotB(S.d7, sh("▽","▼",S.d7)+pct(S.d7)))].filter(Boolean).join(" "),
+    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(mc(S.h5), hotB(S.h5, sh("△","▲",S.h5)+pct(S.h5)))+h5r("#6080b0"), has(S.d7)&&c(mc(S.d7), hotB(S.d7, sh("▽","▼",S.d7)+pct(S.d7)))].filter(Boolean).join(" "),
     tailTxt("#6080b0", li, mg, "  "),
   ].filter(Boolean).join(" " + c("#1a2a4a","┆") + " ") + R;
 },
@@ -513,7 +530,7 @@ const DESIGNS = {
     c(cream, S.dir),
     S.branch && c(sky, "▸" + S.branch),
     has(S.ctx) && c("#9a7a58","CTX") + pbar(S.ctx,6) + px(S.ctx),
-    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c("#9a7a58","5H")+pbar(S.h5,3)+px(S.h5), has(S.d7)&&c("#9a7a58","7D")+pbar(S.d7,3)+px(S.d7)].filter(Boolean).join(" "),
+    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c("#9a7a58","5H")+pbar(S.h5,3)+px(S.h5)+h5r("#9a7a58"), has(S.d7)&&c("#9a7a58","7D")+pbar(S.d7,3)+px(S.d7)].filter(Boolean).join(" "),
     (costS||durS||hasLines) && (plain ? "" : c(wheat,"⛁")) + tailTxt(wheat, leaf, berry),
   ].filter(Boolean).join(" ") + R;
 },
@@ -529,7 +546,7 @@ const DESIGNS = {
     S.branch && { bg: blu, inner: fg(crm) + `${plain ? "⌥" : ""} ${S.branch}` },
     has(S.ctx) && { bg: hot ? red : warm ? org : blu, inner: fg(crm) + (hot ? B + `ctx ${pct(S.ctx)} !` + NB : `ctx ${pct(S.ctx)}`) },
     (has(S.h5)||has(S.d7)||costS||durS||hasLines) && { bg: ink, inner: fg(tan) +
-      [has(S.h5)&&"5h "+tint(S.h5), has(S.d7)&&"7d "+tint(S.d7), costS, durS, hasLines?("+"+(S.add||0)+" -"+(S.del||0)):null].filter(Boolean).join(" · ") },
+      [has(S.h5)&&"5h "+tint(S.h5)+(h5left?" ("+h5left+")":""), has(S.d7)&&"7d "+tint(S.d7), costS, durS, hasLines?("+"+(S.add||0)+" -"+(S.del||0)):null].filter(Boolean).join(" · ") },
   ].filter(Boolean);
   return pills(L, true);
 },
@@ -544,7 +561,7 @@ const DESIGNS = {
     { bg: sea, inner: fg(foam) + ` ${S.dir} ` },
     S.branch && { bg: grass, inner: fg(ink) + ` ▸ ${S.branch} ` },
     has(S.ctx) && { bg: mc(S.ctx), inner: fg(S.ctx>=80?foam:ink) + (S.ctx>=80 ? ` ctx ${B}${pct(S.ctx)}${NB} ` : ` ctx ${pct(S.ctx)} `) },
-    has(S.h5) && { bg: mw(S.h5), inner: fg(S.h5>=80?foam:ink) + ` 5h ${pct(S.h5)} ` },
+    has(S.h5) && { bg: mw(S.h5), inner: fg(S.h5>=80?foam:ink) + ` 5h ${pct(S.h5)}${h5left ? " (" + h5left + ")" : ""} ` },
     has(S.d7) && { bg: mw(S.d7), inner: fg(S.d7>=80?foam:ink) + ` 7d ${pct(S.d7)} ` },
     (costS||durS||hasLines) && { bg: foam, inner: fg(ink) + " " + [costS,durS,hasLines?("+"+(S.add||0)+" -"+(S.del||0)):null].filter(Boolean).join(" · ") + " " },
   ].filter(Boolean);
@@ -560,7 +577,7 @@ const DESIGNS = {
     c(lt, S.dir),
     S.branch && c(md, S.branch),
     has(S.ctx) && c(dk,"ctx ") + val(S.ctx),
-    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(dk,"5h ")+val(S.h5), has(S.d7)&&c(dk,"7d ")+val(S.d7)].filter(Boolean).join("  "),
+    (has(S.h5)||has(S.d7)) && [has(S.h5)&&c(dk,"5h ")+val(S.h5)+h5r(dk), has(S.d7)&&c(dk,"7d ")+val(S.d7)].filter(Boolean).join("  "),
     tailTxt(dk, lt, lt, "  "),
   ].filter(Boolean).join("  " + c("#333333","│") + "  ") + R;
 },

@@ -28,17 +28,22 @@ const repo = (state, branch) => {
   return dir;
 };
 
-const payload = (dir, ctx, h5, d7, cost, durMs, add, del) => JSON.stringify({
+// Fixed clock + reset times so the "5h resets in (Xh Ym)" countdown renders a
+// deterministic value every rebuild (no per-minute git churn). REF is the
+// injected "now"; each state's resets_at is REF plus a plausible window.
+const REF = 1_700_000_000; // fixed epoch seconds
+const RESET = { calm: REF + (4 * 3600 + 55 * 60), hot: REF + (2 * 3600 + 13 * 60) };
+const payload = (dir, ctx, h5, d7, cost, durMs, add, del, resetAt) => JSON.stringify({
   model: { display_name: "Opus 4.8" },
   workspace: { current_dir: dir },
   context_window: { used_percentage: ctx },
-  rate_limits: { five_hour: { used_percentage: h5 }, seven_day: { used_percentage: d7 } },
+  rate_limits: { five_hour: { used_percentage: h5, resets_at: resetAt }, seven_day: { used_percentage: d7 } },
   cost: { total_cost_usd: cost, total_duration_ms: durMs, total_lines_added: add, total_lines_removed: del },
 });
 
 const SAMPLES = {
-  calm: payload(repo("calm", "main"), 4, 1, 0, 0.23, 120000, 0, 0),
-  hot: payload(repo("hot", "release/1.2"), 88, 71, 92, 3.10, 2820000, 612, 208),
+  calm: payload(repo("calm", "main"), 4, 1, 0, 0.23, 120000, 0, 0, RESET.calm),
+  hot: payload(repo("hot", "release/1.2"), 88, 71, 92, 3.10, 2820000, 612, 208, RESET.hot),
 };
 
 const previews = {};
@@ -46,7 +51,7 @@ for (let n = 1; n <= 27; n++) {
   previews[n] = {};
   for (const [state, input] of Object.entries(SAMPLES)) {
     const out = execFileSync("bash", [engine], {
-      input, env: { ...process.env, STATUSLINE_DESIGN: String(n) },
+      input, env: { ...process.env, STATUSLINE_DESIGN: String(n), STATUSLINE_NOW: String(REF * 1000) },
     }).toString().replace(/\r?\n$/, "");
     if (!out) throw new Error(`design ${n} ${state}: empty output`);
     previews[n][state] = ansi2html(out);
