@@ -2,8 +2,9 @@
 
 **27 ready-made status line designs for Claude Code.** Pick one by number from
 a visual gallery — your status line shows your model, directory, git branch,
-context usage, session & weekly rate limits, cost, active time, and lines
-changed, styled the way you like it.
+context usage, session & weekly rate limits (with a countdown to when the
+5-hour window resets), cost, active time, and lines changed, styled the way you
+like it.
 
 ## Install (2 steps)
 
@@ -43,22 +44,26 @@ isn't available):
 |---|---|
 | Model (short) | `◆ O4.8` |
 | Directory | `my-project` |
-| Git branch | `⌥ main` — only inside a git repo |
+| Git branch | `▸ main` — only inside a git repo |
 | Context used | `ctx 37%` — green → amber → red as it fills |
-| Session limit (5-hour) | `5h 42%` — Pro/Max sessions |
+| Session limit (5-hour) | `5h 42% (2h13m)` — usage %, and time until the window resets; Pro/Max sessions |
 | Weekly limit (7-day) | `7d 18%` — Pro/Max sessions |
 | Session cost | `$0.84` — API-equivalent estimate |
-| Active time | `9.0m` |
+| Active time | `00:09` — hours:minutes |
 | Lines changed | `+58 -9` |
+
+The `(2h13m)` reset countdown appears once the 5-hour window has a reset time
+(Pro/Max, after the first response); it hides until then. Nerd-font designs
+draw the branch with a powerline glyph rather than `▸`.
 
 ## Requirements
 
 - **Node.js** on PATH (the engine parses JSON with node — no jq needed)
 - **git** on PATH for the branch segment (optional — hides gracefully without it)
-- A **powerline/Nerd font** for designs 1, 2, 6, 15, 25 (Windows Terminal's
-  default Cascadia Mono works). Seeing boxes? Pick any design badged
-  *font-safe* in the gallery, or set `STATUSLINE_PLAIN=1` for flat blocks with
-  colors intact.
+- A **powerline/Nerd font** for designs 1, 2, 6, 15, 25 (and the ❬ ❭ stroke
+  caps of 22); Windows Terminal's default Cascadia Mono has them. Seeing boxes?
+  Pick any design badged *font-safe* in the gallery, or set `STATUSLINE_PLAIN=1`
+  for plain-glyph fallbacks with colors intact.
 
 ## Manual install (without Claude)
 
@@ -81,5 +86,6 @@ Then merge into `~/.claude/settings.json` (create the file as `{}` if missing):
 |------|---------|
 | `SKILL.md` | The skill Claude follows when you run `/custom-statusline` |
 | `statusline.sh` | The engine — all 27 designs in one script |
-| `gallery.html` | The visual catalog (opens locally, no sign-in needed) |
+| `gallery.html` | The visual catalog (opens locally, no sign-in needed) — previews are generated from real engine output |
+| `tools/` | `build-gallery.js` regenerates the gallery previews from the engine (run after editing a design); `ansi2html.js` converts terminal output to preview HTML |
 | `CLAUDE.md` | Setup instructions Claude follows when you say "clone this repo" |
