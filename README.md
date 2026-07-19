@@ -127,16 +127,5 @@ Then merge this into `~/.claude/settings.json` (create the file as `{}` if it do
 
 ---
 
-<p align="center">
-  Made by <a href="https://github.com/umarfarooque88"><b>Umar Farooque</b></a>
-</p>
-
-<p align="center"><sub>A skill for <a href="https://www.claude.com/product/claude-code">Claude Code</a> · built with Claude Code</sub></p>
-
-<!--
-  ╔══════════════════════════════════════╗
-  ║   custom-statusline — Umar Farooque   ║
-  ║   github.com/umarfarooque88           ║
-  ╚══════════════════════════════════════╝
--->
+<p align="center"><sub>Made by <a href="https://github.com/umarfarooque88">Umar Farooque</a> · a <a href="https://www.claude.com/product/claude-code">Claude Code</a> skill</sub></p>
 

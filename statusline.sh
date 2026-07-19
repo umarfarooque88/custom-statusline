@@ -1,6 +1,7 @@
 #!/bin/sh
 # custom-statusline engine — 27 selectable designs for the Claude Code statusLine.
 # https://github.com/umarfarooque88/custom-statusline  (part of the custom-statusline skill project)
+# Author: Umar Farooque · https://github.com/umarfarooque88
 #
 # Design is picked by number (1-27), see gallery.html or SKILL.md for the catalog.
 # Install: copy this file to ~/.claude/statusline-command.sh, set DESIGN below,

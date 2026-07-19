@@ -1,3 +1,4 @@
+<!-- custom-statusline · design gallery · Author: Umar Farooque · https://github.com/umarfarooque88 -->
 <title>custom-statusline — pick a status line</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,7 +18,12 @@
   }
 
   /* ---- masthead --------------------------------------------------------- */
-  header{ flex:0 0 auto; border-bottom:1px solid var(--rule); padding:16px clamp(16px,4vw,40px) 15px; }
+  header{ flex:0 0 auto; border-bottom:1px solid var(--rule); padding:16px clamp(16px,4vw,40px) 15px;
+    display:flex; align-items:flex-start; justify-content:space-between; gap:14px 24px; flex-wrap:wrap; }
+  .credit{ display:flex; align-items:center; gap:13px; font-family:var(--mono); font-size:11px;
+    color:var(--mut); flex-wrap:wrap; }
+  .credit a{ color:var(--dim); text-decoration:none; border-bottom:1px solid var(--rule); padding-bottom:1px; transition:.15s ease; }
+  .credit a:hover{ color:var(--accent); border-color:var(--accent); }
   .eyebrow{ font-family:var(--mono); font-size:10.5px; letter-spacing:.2em; text-transform:uppercase;
     color:var(--mut); margin:0 0 8px; }
   .titlerow{ display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
@@ -121,11 +127,17 @@
 </style>
 
 <header>
-  <p class="eyebrow">Claude Code · statusLine</p>
-  <div class="titlerow">
-    <h1>Pick a status line</h1>
-    <span class="count">27 designs</span>
+  <div class="brand">
+    <p class="eyebrow">Claude Code · statusLine</p>
+    <div class="titlerow">
+      <h1>Pick a status line</h1>
+      <span class="count">27 designs</span>
+    </div>
   </div>
+  <nav class="credit">
+    <span>by Umar Farooque</span>
+    <a href="https://github.com/umarfarooque88" target="_blank" rel="noopener">GitHub</a>
+  </nav>
 </header>
 
 <div class="app">
