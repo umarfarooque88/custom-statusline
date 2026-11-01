@@ -1,0 +1,34 @@
+name: Bug report
+description: A design renders wrong, or install / switching fails
+labels: [bug]
+body:
+  - type: input
+    id: design
+    attributes:
+      label: Design number
+      placeholder: "e.g. 9"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you expected, what you saw. A screenshot of the status line helps a lot.
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [Windows (Git Bash), macOS, Linux, Other]
+    validations:
+      required: true
+  - type: input
+    id: terminal
+    attributes:
+      label: Terminal and font
+      placeholder: "e.g. Windows Terminal, Cascadia Mono"
+  - type: input
+    id: node
+    attributes:
+      label: Output of `node --version`

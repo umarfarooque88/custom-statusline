@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Engine parses
+        run: bash -n statusline.sh
+
+      - name: Every design renders
+        run: |
+          payload='{"model":{"display_name":"Opus 4.8"},"workspace":{"current_dir":"/tmp/demo"},"context_window":{"used_percentage":42},"cost":{"total_cost_usd":0.5,"total_duration_ms":60000,"total_lines_added":3,"total_lines_removed":1}}'
+          for n in $(seq 1 27); do
+            out=$(printf '%s' "$payload" | STATUSLINE_DESIGN=$n bash statusline.sh)
+            [ -n "$out" ] || { echo "design $n rendered nothing"; exit 1; }
+          done
+          echo "all 27 designs render"
+
+      - name: Gallery previews match the engine
+        run: |
+          git config --global user.email ci@example.com
+          git config --global user.name ci
+          node tools/build-gallery.js
+          git diff --exit-code gallery.html || { echo "::error::gallery.html is stale. Run: node tools/build-gallery.js"; exit 1; }

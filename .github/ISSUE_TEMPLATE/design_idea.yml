@@ -1,0 +1,22 @@
+name: Design idea
+description: Suggest a new status line design
+labels: [design]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: The look, and how it shows a meter going from calm to critical.
+    validations:
+      required: true
+  - type: textarea
+    id: refs
+    attributes:
+      label: References
+      description: Links or images of the style you have in mind.
+  - type: checkboxes
+    id: font
+    attributes:
+      label: Font
+      options:
+        - label: It should work in any font (no Powerline/Nerd Font glyphs)
