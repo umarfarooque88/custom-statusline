@@ -8,7 +8,7 @@ Browse a gallery, reply with a number, and your terminal status line is live at 
   &nbsp;·&nbsp; no install needed
 </p>
 
-<p align="center"><img src="docs/images/gallery-synthwave.png" alt="The design gallery: a two-pane picker with the design list on the left and a live terminal preview on the right" width="900"></p>
+<p align="center"><img src="docs/images/gallery-synthwave.png" alt="The design gallery: numbered tabs 1–27 along the top of a scrapbook page, with the selected design's number, description and calm / high-use previews" width="900"></p>
 
 ---
 
